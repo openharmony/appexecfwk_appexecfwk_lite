@@ -146,12 +146,12 @@ public:
         return head_;
     }
 
-    uint32_t Size()
+    uint32_t Size() const
     {
         return count_;
     }
 
-    bool IsEmpty()
+    bool IsEmpty() const
     {
         return count_ == 0;
     }

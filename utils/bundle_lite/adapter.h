@@ -44,62 +44,37 @@
 #define MutexRelease(a) pthread_mutex_unlock(a)
 
 #else // APP_PLATFORM_WATCHGT
-#include "ability_package_adaptor.h"
-#include "ability_package_manager.h"
-// memory operator define
-#define AdapterMalloc(a) UI_Malloc(a)
+#include "stdint.h"
+#include "ohos_mem_pool.h"
+
+const unsigned int ERROR_SLEEP_TIMES = 300;
+const unsigned int RETRY_TIMES = 10;
+#define AdapterMalloc(a) OhosMalloc(MEM_TYPE_APPFMK_LSRAM, a)
 #define AdapterFree(a) \
     do { \
         if (a != nullptr) { \
-            (void) UI_Free(a); \
+            (void) OhosFree((void *)a); \
             a = nullptr; \
         } \
     } while (0)
 
-#define SvrMalloc(a) MC_SVR_MEM_ALLOC(a)
-#define SvrFree(a) \
+#define UI_Malloc(a) OhosMalloc(MEM_TYPE_APPFMK, a)
+#define UI_Free(a) \
     do { \
         if (a != nullptr) { \
-            (void) MC_SVR_MEM_FREE(a); \
+            (void) OhosFree((void *)a); \
             a = nullptr; \
         } \
     } while (0)
-#define AdapterSend(a, b, c) MC_MsgSnd(a, b, c)
-// mutex operation define
-#define MutexDelete(a) osMutexDelete(a)
-#define MutexAcquire(a, b) osMutexAcquire(a, b)
-#define MutexRelease(a) osMutexRelease(a)
 
-// hash log define
-#ifndef HILOG_DEBUG
-#define HILOG_DEBUG(mod, format, ...)
-#endif
-#ifndef HILOG_ERROR
-#define HILOG_ERROR(mod, format, ...)
-#endif
-#ifndef HILOG_INFO
-#define HILOG_INFO(mod, format, ...)
-#endif
-#ifndef HILOG_WARN
-#define HILOG_WARN(mod, format, ...)
-#endif
-#ifndef HILOG_RACE
-#define HILOG_RACE(mod, format, ...)
-#endif
-
-extern "C" {
-void LogValZeroHashPrintfAAFWKFatal(unsigned int hash, ...);
-void LogValZeroHashPrintfAAFWKError(unsigned int hash, ...);
-void LogValZeroHashPrintfAAFWKWarn(unsigned int hash, ...);
-void LogValZeroHashPrintfAAFWKInfo(unsigned int hash, ...);
-void LogValZeroHashPrintfAAFWKDebug(unsigned int hash, ...);
-
-void LogHashPrintfAAFWKFatal(unsigned int hash, unsigned int paraNum, ...);
-void LogHashPrintfAAFWKError(unsigned int hash, unsigned int paraNum, ...);
-void LogHashPrintfAAFWKWarn(unsigned int hash, unsigned int paraNum, ...);
-void LogHashPrintfAAFWKInfo(unsigned int hash, unsigned int paraNum, ...);
-void LogHashPrintfAAFWKDebug(unsigned int hash, unsigned int paraNum, ...);
-}
+#define APP_ERRCODE_EXTRA(code1, code2)
+#define APP_EVENT(code1)
+#define RecordAbiityInfoEvt(code1)
+#define MutexDelete(a)
+#define MutexAcquire(a, b)
+#define MutexRelease(a)
+#define SvrFree AdapterFree
+#define SvrMalloc AdapterMalloc
 
 #endif // APP_PLATFORM_WATCHGT
 #endif // FRAMEWORKS_APP_ADAPTER_H
