@@ -11,7 +11,7 @@
 **图 1**  包管理组件框架图<a name="fig1047932418305"></a>  
 ![](figures/包管理组件框架图.png "包管理组件框架图")
 
--   **BundleKit：**是包管理服务对外提供的接口，有安装/卸载接口、包信息查询接口、包状态变化监听接口。
+-   **BundleKit**：是包管理服务对外提供的接口，有安装/卸载接口、包信息查询接口、包状态变化监听接口。
 -   **包扫描子模块**：用来解析本地预制或者安装的安装包，提取里面的各种信息，供管理子模块进行管理，持久化。
 
 -   **包安装子模块**：负责安装，卸载，升级一个包。
@@ -39,7 +39,7 @@
 ```
 
 -   包管理服务为BundleMs，服务运行于foudation进程中；
--   BundleMs注册到sa\_manager中，sa\_manager运行于foundation进程中，sa\_manager为BundleMs创建线程运行环境。具体创建BundleMs服务的方式以及使用该服务的方式，可参考[系统服务框架子系统](zh-cn_topic_0000001051589563.md)；
+-   BundleMs注册到sa\_manager中，sa\_manager运行于foundation进程中，sa\_manager为BundleMs创建线程运行环境。具体创建BundleMs服务的方式以及使用该服务的方式，可参考系统服务框架子系统；
 -   系统启动后，BundleMs会随系统启动而启动；
 -   使用bm工具可以安装指定的hap包（以hispark\_taurus为例，bm工具在系统构建后放置在out/hispark\_taurus/ipcamera\_hispark\_taurus/dev\_tools/bin下）：
 
@@ -49,9 +49,9 @@
 
 ## 相关仓<a name="section93061357133720"></a>
 
-用户程序框架子系统
+[用户程序框架子系统](https://gitee.com/openharmony/docs/blob/master/zh-cn/readme/%E7%94%A8%E6%88%B7%E7%A8%8B%E5%BA%8F%E6%A1%86%E6%9E%B6%E5%AD%90%E7%B3%BB%E7%BB%9F.md)
 
-aafwk\_lite
+[aafwk\_aafwk\_lite](https://gitee.com/openharmony/aafwk_aafwk_lite/blob/master/README_zh.md)
 
-**appexecfwk\_lite**
+**appexecfwk\_appexecfwk\_lite**
 
