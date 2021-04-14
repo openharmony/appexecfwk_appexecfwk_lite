@@ -49,9 +49,9 @@ The bundle management framework is provided by OpenHarmony for you to manage app
 
 ## Repositories Involved<a name="section93061357133720"></a>
 
-Application framework
+[Application framework](https://gitee.com/openharmony/docs/blob/master/en/readme/application-framework.md)
 
-aafwk\_lite
+[aafwk\_aafwk\_lite](https://gitee.com/openharmony/aafwk_aafwk_lite/blob/master/README.md)
 
-**appexecfwk\_lite**
+**appexecfwk\_appexecfwk\_lite**
 
