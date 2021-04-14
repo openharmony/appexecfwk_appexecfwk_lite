@@ -163,6 +163,7 @@ bool BundleResTransform::ConvertDesResIdToBundleInfo(const std::string &path, ui
     if (!AbilityInfoUtils::SetAbilityInfoDescription(bundleInfo->abilityInfos + index, description)) {
         HILOG_ERROR(HILOG_MODULE_APP, "set description resId in abilityInfo fail!");
         AdapterFree(description);
+        return false;
     }
     AdapterFree(description);
     return true;
