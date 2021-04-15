@@ -450,14 +450,14 @@ uint8_t GtBundleParser::ConvertResInfoToBundleInfo(const char *path, uint32_t la
     if (labelId != 0) {
         char *label = nullptr;
         if (GLOBAL_GetValueById(labelId, resPath, &label) != 0) {
-            AdapterFree(label);
+            Free(label);
             AdapterFree(resPath);
             return ERR_APPEXECFWK_INSTALL_FAILED_PARSE_LABEL_RES_ERROR;
         }
         // release label memory first
         AdapterFree(bundleInfo->label);
         bundleInfo->label = Utils::Strdup(label);
-        AdapterFree(label);
+        Free(label);
         if (bundleInfo->label == nullptr) {
             AdapterFree(resPath);
             return ERR_APPEXECFWK_INSTALL_FAILED_INTERNAL_ERROR;
@@ -496,16 +496,16 @@ bool GtBundleParser::ConvertIconResToBundleInfo(const char *resPath, uint32_t ic
     };
     char *bigIconPath = BundleUtil::Strscat(bigIconPathComp, sizeof(bigIconPathComp) / sizeof(char *));
     if (bigIconPath == nullptr) {
-        AdapterFree(relativeIconPath);
+        Free(relativeIconPath);
         return false;
     }
     char *smallIconPath = BundleUtil::Strscat(smallIconPathComp, sizeof(smallIconPathComp) / sizeof(char *));
     if (smallIconPath == nullptr) {
-        AdapterFree(relativeIconPath);
+        Free(relativeIconPath);
         AdapterFree(bigIconPath);
         return false;
     }
-    AdapterFree(relativeIconPath);
+    Free(relativeIconPath);
     if (!BundleUtil::IsFile(bigIconPath) || !BundleUtil::IsFile(smallIconPath)) {
         AdapterFree(bigIconPath);
         AdapterFree(smallIconPath);
