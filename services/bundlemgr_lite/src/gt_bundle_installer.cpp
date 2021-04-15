@@ -157,8 +157,12 @@ uint8_t GtBundleInstaller::SwitchErrorCode(int32_t errorCode)
     }
 }
 
-uint8_t GtBundleInstaller::Install(const char *path)
+uint8_t GtBundleInstaller::Install(const char *path, char* &resultBundleName)
 {
+    if (installationProgress_.bundleName != nullptr) {
+        AdapterFree(installationProgress_.bundleName);
+        installationProgress_.bundleName = nullptr;
+    }
     if (path == nullptr) {
         return ERR_APPEXECFWK_INSTALL_FAILED_PARAM_ERROR;
     }
@@ -193,6 +197,8 @@ uint8_t GtBundleInstaller::Install(const char *path)
     if (errorCode != ERR_OK) {
         return errorCode;
     }
+    resultBundleName = Utils::Strdup(installRecord.bundleName);
+
     // rename bundle.json
     if (!RenameJsonFile(installRecord.bundleName, randStr)) {
         BundleInfo *bundleInfo = GtManagerService::GetInstance().QueryBundleInfo(installRecord.bundleName);
@@ -238,9 +244,6 @@ uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *ra
     // parse HarmoyProfile.json, get permissions and bundleInfo
     errorCode = GtBundleParser::ParseHapProfile(fp, fileSize, permissions, bundleRes, &bundleInfo);
     CHECK_PRO_RESULT(errorCode, fp, permissions, bundleInfo, signatureInfo);
-    if (installationProgress_.bundleName != nullptr) {
-        AdapterFree(installationProgress_.bundleName);
-    }
     installationProgress_.bundleName = Utils::Strdup(bundleInfo->bundleName);
     installationProgress_.installStateLabel = BMS_FIRST_FINISHED_PROCESS;
     // terminate current runing app
@@ -282,6 +285,10 @@ uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *ra
     bool isUpdate = GtManagerService::GetInstance().QueryBundleInfo(installRecord.bundleName) != nullptr;
     errorCode = HandleFileAndBackUpRecord(installRecord, tmpCodePath, randStr, bundleInfo->dataPath, isUpdate);
     AdapterFree(tmpCodePath);
+    CHECK_PRO_ROLLBACK(errorCode, permissions, bundleInfo, signatureInfo, randStr);
+
+    // move rawfile to data path when rawfile is exists
+    errorCode = MoveRawFileToDataPath(bundleInfo);
     CHECK_PRO_ROLLBACK(errorCode, permissions, bundleInfo, signatureInfo, randStr);
 
     installationProgress_.installStateLabel = BMS_FOUR_FINISHED_PROCESS;

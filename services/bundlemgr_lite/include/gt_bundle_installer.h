@@ -37,7 +37,7 @@ public:
     GtBundleInstaller() = default;
     ~GtBundleInstaller() = default;
 
-    uint8_t Install(const char *path);
+    uint8_t Install(const char *path, char* &resultBundleName);
     uint8_t Uninstall(const char *bundleName);
     int8_t getInstallationProgress(const char *bundleName);
 private:

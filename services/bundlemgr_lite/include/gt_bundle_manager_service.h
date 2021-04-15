@@ -30,11 +30,17 @@
 #include "ohos_types.h"
 
 namespace OHOS {
+#define MAX_APP_FILE_PATH_LEN 100
 struct ToBeInstalledApp {
     bool isSystemApp;
     bool isUpdated;
     char *path;
     char *installedPath;
+    char *appId;
+};
+struct AppInfoList {
+    LOS_DL_LIST appDoubleList;
+    char filePath[MAX_APP_FILE_PATH_LEN];
 };
 
 class GtManagerService {
@@ -55,13 +61,9 @@ public:
     void RemoveBundleInfo(const char *bundleName);
     void AddBundleInfo(BundleInfo *info);
     bool UpdateBundleInfo(BundleInfo *info);
-    char *GetAppIdByBundleName(const char *bundleName);
-    uint32_t GetVersionCodeByBundlePath(const char *path, unsigned char *versionCode, uint8_t length);
     uint32_t GetNumOfThirdBundles();
     void RemoveBundleResList(const char *bundleName);
     void AddBundleResList(const BundleRes *bundleRes);
-    void UpdateBundleInfoList();
-    int32_t ReportSystemBundleInstallProcess(uint8_t process, const char *bundleName, uint8_t installState);
     void ReportInstallProcess(const char *bundleName, uint8_t bundleStyle, uint8_t process);
     void AddNumOfThirdBundles();
     void ReduceNumOfThirdBundles();
@@ -80,12 +82,16 @@ private:
     bool CheckSystemBundleIsValid(const char *appPath, char **bundleName, int32_t &versionCode);
     bool CheckThirdSystemBundleHasUninstalled(const char *bundleName, const cJSON *object);
     void AddSystemAppPathList(const char *installedPath, const char *path, List<ToBeInstalledApp *> *systemPathList,
-        bool isSystemApp, bool isUpdated);
+        bool isSystemApp, bool isUpdated, const char *appId);
     void RemoveSystemAppPathList(List<ToBeInstalledApp *> *systemPathList);
     void ClearSystemBundleInstallMsg();
     void TransformJsToBcWhenRestart(const char *codePath, const char *bundleName);
     void TransformJsToBc(const char *codePath, const char *bundleJsonPath, cJSON *installRecordObj);
     bool IsSystemBundleInstalledPath(const char *appPath, const List<ToBeInstalledApp *> *systemPathList);
+    AppInfoList *APP_InitAllAppInfo(void);
+    void APP_QueryAppInfo(const char *appDir, AppInfoList *list);
+    void APP_InsertAppInfo(char *filePath, AppInfoList *list);
+    void APP_FreeAllAppInfo(const AppInfoList *list);
 
     GtBundleInstaller *installer_;
     BundleMap *bundleMap_;
@@ -97,16 +103,6 @@ private:
 }
 
 extern "C" {
-#define JS_FILE_PATH_FLASH_LIGHT "system/ace/sys/flashlight.bin"
-#define JS_FILE_PATH_HEALTH_ECG "system/ace/sys/health_ecg.bin"
-#define MAX_APP_FILE_PATH_LEN 100
-typedef struct {
-    LOS_DL_LIST appDoubleList;
-    char filePath[MAX_APP_FILE_PATH_LEN];
-} AppInfoList;
-
-AppInfoList *APP_InitAllAppInfo(void);
-void APP_FreeAllAppInfo(const AppInfoList *list);
 void EnableServiceWdg(void);
 void DisableServiceWdg(void);
 }
