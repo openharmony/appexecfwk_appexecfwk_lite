@@ -40,6 +40,7 @@
 namespace OHOS {
 const uint8_t PAIR_VALUE = 2;
 const uint8_t FINISHED_PROCESS = 100;
+const uint8_t OPERATION_DOING = 200;
 
 static char *g_currentBundle = nullptr;
 const int32_t BUNDLENAME_MUTEX_TIMEOUT = 2000;
@@ -83,9 +84,6 @@ void SetCurrentBundle(const char *name)
 bool GtManagerService::Install(const char *hapPath, const InstallParam *installParam,
     InstallerCallback installerCallback)
 {
-    if (!BundleUtil::IsDir(JSON_PATH_NO_SLASH_END)) {
-        BundleUtil::MkDirs(JSON_PATH_NO_SLASH_END);
-    }
     if (installer_ == nullptr) {
         installer_ = new GtBundleInstaller();
     }
@@ -107,11 +105,16 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
         AdapterFree(path);
         return false;
     }
+    char *resultMessage = Utils::Strdup(name);
+    if (installerCallback != nullptr) {
+        (*installerCallback)(OPERATION_DOING, resultMessage + 1);
+    }
+    char *resultBundleName = nullptr;
     DisableServiceWdg();
-    uint8_t ret = installer_->Install(path);
+    uint8_t ret = installer_->Install(path, resultBundleName);
     EnableServiceWdg();
     if (installerCallback != nullptr) {
-        (*installerCallback)(ret, nullptr);
+        (*installerCallback)(ret, resultBundleName);
     }
     AdapterFree(path);
     return true;
@@ -135,12 +138,15 @@ bool GtManagerService::Uninstall(const char *bundleName, const InstallParam *ins
         AdapterFree(innerBundleName);
         return false;
     }
+    char *resultMessage = Utils::Strdup(innerBundleName);
+    if (installerCallback != nullptr) {
+        (*installerCallback)(OPERATION_DOING, resultMessage);
+    }
     uint8_t bResult = installer_->Uninstall(innerBundleName);
     if (installerCallback != nullptr) {
-        (*installerCallback)(bResult, nullptr);
+        (*installerCallback)(bResult, innerBundleName);
     }
     SetCurrentBundle(nullptr);
-    AdapterFree(innerBundleName);
     return true;
 }
 
@@ -181,7 +187,7 @@ uint8_t GtManagerService::GetBundleInfos(const int flags, BundleInfo **bundleInf
 
 void GtManagerService::InstallAllSystemBundle()
 {
-    AppInfoList *list = APP_InitAllAppInfo();
+    AppInfoList *list = GtManagerService::APP_InitAllAppInfo();
     if (list == nullptr) {
         HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] InstallAllSystemBundle InitAllAppInfo fail, list is nullptr");
         return;
@@ -196,7 +202,7 @@ void GtManagerService::InstallAllSystemBundle()
         }
         InstallSystemBundle(((AppInfoList *)currentNode)->filePath);
     }
-    APP_FreeAllAppInfo(list);
+    GtManagerService::APP_FreeAllAppInfo(list);
 }
 
 void GtManagerService::InstallSystemBundle(const char *systemAppPath)
@@ -230,14 +236,13 @@ void GtManagerService::InstallSystemBundle(const char *systemAppPath)
         ClearSystemBundleInstallMsg();
         return;
     }
-    uint8_t result = installer_->Install(systemAppPath);
+    char *resultBundleName = nullptr;
+    DisableServiceWdg();
+    uint8_t result = installer_->Install(systemAppPath, resultBundleName);
+    EnableServiceWdg();
+    AdapterFree(resultBundleName);
     SetCurrentBundle(nullptr);
     HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] install system result is %d", result);
-    if (result != ERR_OK) {
-        ReportSystemBundleInstallProcess(0, nullptr, BUNDLE_INSTALL_FAIL);
-    } else {
-        ReportSystemBundleInstallProcess(FINISHED_PROCESS, nullptr, BUNDLE_INSTALL_OK);
-    }
     // delete resource temp dir
     ClearSystemBundleInstallMsg();
     (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
@@ -277,6 +282,7 @@ void GtManagerService::ScanPackages()
 {
     if (!BundleUtil::IsDir(JSON_PATH_NO_SLASH_END)) {
         BundleUtil::MkDirs(JSON_PATH_NO_SLASH_END);
+        InstallAllSystemBundle();
         return;
     }
 
@@ -297,6 +303,10 @@ void GtManagerService::ScanPackages()
     // install new system app or app which is to be updated
     for (auto node = systemPathList.Begin(); node != systemPathList.End(); node = node->next_) {
         ToBeInstalledApp *toBeInstalledApp = node->value_;
+        if (toBeInstalledApp->isUpdated) {
+            (void) ReloadBundleInfo(toBeInstalledApp->installedPath, toBeInstalledApp->appId,
+                toBeInstalledApp->isSystemApp);
+        }
         InstallSystemBundle(toBeInstalledApp->path);
     }
     RemoveSystemAppPathList(&systemPathList);
@@ -312,13 +322,14 @@ void GtManagerService::RemoveSystemAppPathList(List<ToBeInstalledApp *> *systemP
         ToBeInstalledApp *toBeInstalledApp = node->value_;
         AdapterFree(toBeInstalledApp->installedPath);
         AdapterFree(toBeInstalledApp->path);
+        AdapterFree(toBeInstalledApp->appId);
         UI_Free(toBeInstalledApp);
     }
 }
 
 void GtManagerService::ScanSystemApp(const cJSON *uninstallRecord, List<ToBeInstalledApp *> *systemPathList)
 {
-    AppInfoList *list = APP_InitAllAppInfo();
+    AppInfoList *list = GtManagerService::APP_InitAllAppInfo();
     if (list == nullptr) {
         HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] ScanSystemApp InitAllAppInfo fail, list is nullptr");
         return;
@@ -363,7 +374,7 @@ void GtManagerService::ScanSystemApp(const cJSON *uninstallRecord, List<ToBeInst
             systemPathList, versionCode, scanFlag);
         AdapterFree(bundleName);
     }
-    APP_FreeAllAppInfo(list);
+    GtManagerService::APP_FreeAllAppInfo(list);
 }
 
 void GtManagerService::ScanThirdApp(const char *appDir, const List<ToBeInstalledApp *> *systemPathList)
@@ -478,13 +489,13 @@ void GtManagerService::ReloadEntireBundleInfo(const char *appPath, const char *b
     bool isSystemApp = (scanFlag == SYSTEM_APP_FLAG);
     if (scanFlag != THIRD_APP_FLAG) {
         if (!res) {
-            AddSystemAppPathList(nullptr, appPath, systemPathList, isSystemApp, false);
+            AddSystemAppPathList(nullptr, appPath, systemPathList, isSystemApp, false, appId);
             AdapterFree(appId);
             AdapterFree(codePath);
             return;
         }
         if (oldVersionCode < versionCode) {
-            AddSystemAppPathList(codePath, appPath, systemPathList, isSystemApp, true);
+            AddSystemAppPathList(codePath, appPath, systemPathList, isSystemApp, true, appId);
             AdapterFree(appId);
             AdapterFree(codePath);
             return;
@@ -510,7 +521,7 @@ void GtManagerService::ReloadEntireBundleInfo(const char *appPath, const char *b
 }
 
 void GtManagerService::AddSystemAppPathList(const char *installedPath, const char *path,
-    List<ToBeInstalledApp *> *systemPathList, bool isSystemApp, bool isUpdated)
+    List<ToBeInstalledApp *> *systemPathList, bool isSystemApp, bool isUpdated, const char *appId)
 {
     if (path == nullptr || systemPathList == nullptr) {
         return;
@@ -525,6 +536,7 @@ void GtManagerService::AddSystemAppPathList(const char *installedPath, const cha
     toBeInstalledApp->path = Utils::Strdup(path);
     toBeInstalledApp->isSystemApp = isSystemApp;
     toBeInstalledApp->isUpdated = isUpdated;
+    toBeInstalledApp->appId = Utils::Strdup(appId);
     systemPathList->PushBack(toBeInstalledApp);
 }
 
@@ -598,46 +610,6 @@ void GtManagerService::RemoveBundleResList(const char *bundleName)
             AdapterFree(res->abilityRes);
             AdapterFree(res);
             bundleResList_->Remove(node);
-            return;
-        }
-    }
-}
-
-void GtManagerService::UpdateBundleInfoList()
-{
-    if (bundleResList_ == nullptr) {
-        return;
-    }
-
-    for (auto node = bundleResList_->Begin(); node != bundleResList_->End(); node = node->next_) {
-        BundleRes *res = node->value_;
-        if (res->bundleName == nullptr || res->abilityRes == nullptr) {
-            continue;
-        }
-
-        BundleInfo *bundleInfo = bundleMap_->Get(res->bundleName);
-        if (bundleInfo == nullptr) {
-            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] get no bundleInfo when change bundle res!");
-            continue;
-        }
-
-        int32_t len = strlen(INSTALL_PATH) + 1 + strlen(res->bundleName);
-        char *path = reinterpret_cast<char *>(UI_Malloc(len + 1));
-        if (path == nullptr) {
-            continue;
-        }
-
-        if (sprintf_s(path, len + 1, "%s/%s", INSTALL_PATH, res->bundleName) < 0) {
-            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] change bundle res failed! because sprintf_s fail");
-            UI_Free(path);
-            continue;
-        }
-
-        uint8_t errorCode = GtBundleParser::ConvertResInfoToBundleInfo(path, res->abilityRes->labelId,
-            res->abilityRes->iconId, bundleInfo);
-        UI_Free(path);
-        if (errorCode != ERR_OK) {
-            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] change bundle res failed! errorCode is %d", errorCode);
             return;
         }
     }
@@ -795,50 +767,6 @@ bool GtManagerService::UpdateBundleInfo(BundleInfo *info)
     return bundleMap_->Update(info);
 }
 
-char *GtManagerService::GetAppIdByBundleName(const char *bundleName)
-{
-    if (bundleName == nullptr) {
-        return nullptr;
-    }
-    BundleInfo bundleInfo;
-    if (GetBundleInfo(bundleName, 0, bundleInfo) != ERR_OK) {
-        return nullptr;
-    }
-    return BundleUtil::GetValueFromBundleJson(bundleName, JSON_SUB_KEY_APPID);
-}
-
-uint32_t GtManagerService::GetVersionCodeByBundlePath(const char *path, unsigned char *versionCode, uint8_t length)
-{
-    if (!BundleUtil::IsFile(path) || versionCode == nullptr || length == 0) {
-        return 0;
-    }
-
-    char *bundleName = nullptr;
-    int32_t code = -1;
-    if (!GtBundleParser::ParseBundleAttr(path, &bundleName, code)) {
-        AdapterFree(bundleName);
-        return 0;
-    }
-    AdapterFree(bundleName);
-    // convert number to char
-    uint8_t versionCodeLen = 0;
-    while (code != 0) {
-        if (versionCodeLen == length - 1) {
-            return 0;
-        }
-        versionCode[versionCodeLen++] = code % MAX_SINGLE_DIGIT_VALUE + ZERO_ASCII_NUM;
-        code /= MAX_SINGLE_DIGIT_VALUE;
-    }
-    versionCode[versionCodeLen] = '\0';
-    // pre-post conversion
-    for (uint8_t j = 0; j < versionCodeLen / PAIR_VALUE; j++) {
-        versionCode[j] = versionCode[j] + versionCode[versionCodeLen - 1 - j];
-        versionCode[versionCodeLen - 1 - j] = versionCode[j] - versionCode[versionCodeLen - 1 - j];
-        versionCode[j] = versionCode[j] - versionCode[versionCodeLen - 1 - j];
-    }
-    return versionCodeLen;
-}
-
 uint32_t GtManagerService::GetNumOfThirdBundles()
 {
     return installedThirdBundleNum_;
@@ -869,38 +797,6 @@ void GtManagerService::SendBundleListChangedToLauncher(BundleState state, const 
     }
 }
 
-int32_t GtManagerService::ReportSystemBundleInstallProcess(uint8_t process, const char *bundleName,
-    uint8_t installState)
-{
-    if (systemBundleInstallMsg_ == nullptr) {
-        return -1;
-    }
-
-    BundleInstallMsg *bundleInstallMsg = reinterpret_cast<BundleInstallMsg *>(SvrMalloc(sizeof(BundleInstallMsg)));
-    if (bundleInstallMsg == nullptr) {
-        return -1;
-    }
-    bundleInstallMsg->installState = static_cast<InstallState>(installState);
-    bundleInstallMsg->installProcess = process;
-    bundleInstallMsg->label = systemBundleInstallMsg_->label;
-    bundleInstallMsg->bundleName = systemBundleInstallMsg_->bundleName;
-    bundleInstallMsg->smallIconPath = systemBundleInstallMsg_->smallIconPath;
-    bundleInstallMsg->bigIconPath = systemBundleInstallMsg_->bigIconPath;
-    return 0;
-}
-
-void GtManagerService::ReportInstallProcess(const char *bundleName, uint8_t bundleStyle, uint8_t process)
-{
-    if (bundleName == nullptr) {
-        return;
-    }
-    if (bundleStyle == THIRD_APP_FLAG) {
-        (void) BundleCallbackFunc(process, bundleName, 0);
-    } else {
-        (void) ReportSystemBundleInstallProcess(process, bundleName, BUNDLE_INSTALL_DOING);
-    }
-}
-
 int8_t GtManagerService::GetInstallState(const char *bundleName) const
 {
     BundleInfo *installedInfo = bundleMap_->Get(bundleName);
@@ -909,26 +805,124 @@ int8_t GtManagerService::GetInstallState(const char *bundleName) const
     }
     return installer_->getInstallationProgress(bundleName);
 }
+
+AppInfoList *GtManagerService::APP_InitAllAppInfo()
+{
+    AppInfoList *list = (AppInfoList *)AdapterMalloc(sizeof(AppInfoList));
+    if (list == nullptr) {
+        return nullptr;
+    }
+
+    if (memset_s(list, sizeof(AppInfoList), 0, sizeof(AppInfoList)) != EOK) {
+        AdapterFree(list);
+        return nullptr;
+    }
+
+    LOS_ListInit(&list->appDoubleList);
+
+    APP_QueryAppInfo(SYSTEM_BUNDLE_PATH, list);
+    APP_QueryAppInfo(THIRD_SYSTEM_BUNDLE_PATH, list);
+    return list;
+}
+
+void GtManagerService::APP_QueryAppInfo(const char *appDir, AppInfoList *list)
+{
+    struct dirent *ent = nullptr;
+    if (appDir == nullptr) {
+        return;
+    }
+
+    DIR *dir = opendir(appDir);
+    if (dir == nullptr) {
+        return;
+    }
+    char *fileName = reinterpret_cast<char *>(AdapterMalloc(MAX_NAME_LEN + 1));
+    while ((ent = readdir(dir)) != nullptr) {
+        if (memset_s(fileName, MAX_NAME_LEN + 1, 0, MAX_NAME_LEN + 1) != EOK) {
+            break;
+        }
+
+        if (strcpy_s(fileName, MAX_NAME_LEN + 1, ent->d_name) != 0) {
+            break;
+        }
+
+        if ((strcmp(fileName, ".") == 0) || (strcmp(fileName, "..")) == 0) {
+            continue;
+        }
+
+        int32_t len = strlen(appDir) + 1 + strlen(fileName) + 1;
+        char *appPath = reinterpret_cast<char *>(AdapterMalloc(len));
+        if (appPath == nullptr) {
+            break;
+        }
+
+        if (sprintf_s(appPath, len, "%s/%s", appDir, fileName) < 0) {
+            AdapterFree(appPath);
+            break;
+        }
+
+        if (!BundleUtil::IsFile(appPath)) {
+            AdapterFree(appPath);
+            continue;
+        }
+
+        APP_InsertAppInfo(appPath, (AppInfoList *)&list->appDoubleList);
+        AdapterFree(appPath);
+    }
+    AdapterFree(fileName);
+}
+
+void GtManagerService::APP_InsertAppInfo(char *filePath, AppInfoList *list)
+{
+    if ((filePath == nullptr) || (list == nullptr)) {
+        return;
+    }
+
+    AppInfoList *app = (AppInfoList *)AdapterMalloc(sizeof(AppInfoList));
+    if (app == nullptr) {
+        return;
+    }
+
+    if (memset_s(app, sizeof(AppInfoList), 0, sizeof(AppInfoList)) != 0) {
+        AdapterFree(app);
+        return;
+    }
+
+    if (memcpy_s(app->filePath, sizeof(app->filePath), filePath, strnlen(filePath, MAX_APP_FILE_PATH_LEN)) != 0) {
+        AdapterFree(app);
+        return;
+    }
+
+    LOS_ListTailInsert(&list->appDoubleList, &app->appDoubleList);
+    return;
+}
+
+void GtManagerService::APP_FreeAllAppInfo(const AppInfoList *list)
+{
+    if (list == nullptr) {
+        return;
+    }
+
+    AppInfoList *currentNode = nullptr;
+    AppInfoList *nextNode = nullptr;
+    LOS_DL_LIST_FOR_EACH_ENTRY_SAFE (currentNode, nextNode, &list->appDoubleList, AppInfoList, appDoubleList) {
+        if (currentNode != nullptr) {
+            LOS_ListDelete(&(currentNode->appDoubleList));
+            AdapterFree(currentNode);
+            currentNode = nullptr;
+        }
+    }
+
+    if (list != nullptr) {
+        AdapterFree(list);
+    }
+    return;
+}
 } // namespace OHOS
 extern "C" {
 static char *g_currentBundle = nullptr;
 const int32_t BUNDLENAME_MUTEX_TIMEOUT = 2000;
 static osMutexId_t g_currentBundleMutex;
-
-char *GetAppIdByBundleName(const char *bundleName)
-{
-    return OHOS::GtManagerService::GetInstance().GetAppIdByBundleName(bundleName);
-}
-
-uint32_t GetVersionCodeByBundlePath(const char *path, unsigned char *versionCode, uint8_t length)
-{
-    return OHOS::GtManagerService::GetInstance().GetVersionCodeByBundlePath(path, versionCode, length);
-}
-
-void UpdateBundleInfoList()
-{
-    OHOS::GtManagerService::GetInstance().UpdateBundleInfoList();
-}
 
 void SetCurrentBundle(const char *name)
 {
@@ -965,30 +959,5 @@ const char *GetCurrentBundle()
 
     MutexRelease(&g_currentBundleMutex);
     return bundleName;
-}
-
-int ReportSystemBundleInstallProcess(unsigned char process, const char *bundleName, unsigned char installState)
-{
-    return 0;
-}
-
-int BundleCallbackFunc(unsigned char operationResult, const char *bundleName, unsigned char errorcode)
-{
-    return 0;
-}
-
-void ScanPackages()
-{
-    OHOS::GtManagerService::GetInstance().ScanPackages();
-}
-
-AppInfoList *APP_InitAllAppInfo()
-{
-    return nullptr;
-}
-
-void APP_FreeAllAppInfo(const AppInfoList *list)
-{
-    return;
 }
 }

@@ -46,13 +46,6 @@ typedef struct {
     uint8 installProcess;
 } BundleInstallMsg;
 
-/**
- * add for app market
- */
-int BundleCallbackFunc(unsigned char  operationResult, const char *bundleName, unsigned char  errorcode);
-
-int ReportSystemBundleInstallProcess(unsigned char  process, const char *bundleName, unsigned char  installState);
-
 #ifdef __cplusplus
 #if __cplusplus
 }

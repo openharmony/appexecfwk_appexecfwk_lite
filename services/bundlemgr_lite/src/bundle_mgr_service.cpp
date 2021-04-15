@@ -40,7 +40,6 @@ static void Init()
     CHECK_NULLPTR_RETURN(sm, "BundleManagerService", "get samgr error");
     BOOL result = sm->RegisterService(BundleMgrService::GetInstance());
     PRINTI("BundleManagerService", "bms starts %{public}s", result ? "successfully" : "unsuccessfully");
-    OHOS::GtManagerService::GetInstance().ScanPackages();
 }
 SYSEX_SERVICE_INIT(Init);
 
@@ -57,6 +56,13 @@ BOOL BundleMgrService::ServiceInitialize(Service *service, Identity identity)
     }
     BundleMgrService *bundleManagerService = static_cast<BundleMgrService *>(service);
     bundleManagerService->identity_ = identity;
+    Request request = {
+        .msgId = BMS_SCAN_PACKAGE_MSG,
+        .data = nullptr,
+        .len = 0,
+        .msgValue = 0,
+    };
+    (void) SAMGR_SendRequest(bundleManagerService->GetIdentity(), &request, nullptr);
     return TRUE;
 }
 
@@ -76,6 +82,8 @@ BOOL BundleMgrService::ServiceMessageHandle(Service *service, Request *request)
     } else if (request->msgId == BMS_UNINSTALL_MSG) {
         OHOS::GtManagerService::GetInstance().Uninstall(g_bmsbuff->bundleParameter, nullptr,
             g_bmsbuff->bundleInstallerCallback);
+    } else if (request->msgId == BMS_SCAN_PACKAGE_MSG) {
+        OHOS::GtManagerService::GetInstance().ScanPackages();
     }
     return TRUE;
 }
