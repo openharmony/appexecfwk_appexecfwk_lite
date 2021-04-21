@@ -312,7 +312,7 @@ bool GtBundleParser::CheckDeviceTypeIsValid(const cJSON *deviceTypeObject)
         return false;
     }
 
-    char const *deviceType = GetProductType();
+    const char const *deviceType = GetDeviceType();
     if (deviceType == nullptr) {
         return false;
     }
