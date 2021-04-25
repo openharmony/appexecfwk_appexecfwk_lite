@@ -73,7 +73,7 @@ Identity *BundleMgrService::GetIdentity()
 
 BOOL BundleMgrService::ServiceMessageHandle(Service *service, Request *request)
 {
-    if (request == nullptr || g_bmsbuff == nullptr) {
+    if (request == nullptr) {
         return FALSE;
     }
     if (request->msgId == BMS_INSTALL_MSG) {
