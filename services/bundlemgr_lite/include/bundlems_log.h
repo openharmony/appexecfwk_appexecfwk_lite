@@ -16,9 +16,7 @@
 #ifndef OHOS_LOGGING_H
 #define OHOS_LOGGING_H
 
-#ifndef APP_PLATFORM_WATCHGT
 #include "log.h"
-#endif
 
 namespace OHOS {
 #undef LOG_TAG
