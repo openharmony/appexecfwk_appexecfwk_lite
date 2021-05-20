@@ -106,6 +106,7 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
         return false;
     }
     char *resultMessage = Utils::Strdup(name);
+    char *retMessage = Utils::Strdup(name);
     if (installerCallback != nullptr) {
         (*installerCallback)(OPERATION_DOING, resultMessage + 1);
     }
@@ -114,7 +115,7 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
     uint8_t ret = installer_->Install(path, resultBundleName);
     EnableServiceWdg();
     if (installerCallback != nullptr) {
-        (*installerCallback)(ret, resultBundleName);
+        (*installerCallback)(ret, retMessage + 1);
     }
     AdapterFree(path);
     return true;

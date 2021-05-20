@@ -76,14 +76,16 @@ BOOL BundleMgrService::ServiceMessageHandle(Service *service, Request *request)
     if (request == nullptr) {
         return FALSE;
     }
-    if (request->msgId == BMS_INSTALL_MSG) {
+    if (request->msgId == BMS_INSTALL_MSG && g_bmsbuff != nullptr) {
         OHOS::GtManagerService::GetInstance().Install(g_bmsbuff->bundleParameter, nullptr,
             g_bmsbuff->bundleInstallerCallback);
-    } else if (request->msgId == BMS_UNINSTALL_MSG) {
+    } else if (request->msgId == BMS_UNINSTALL_MSG && g_bmsbuff != nullptr) {
         OHOS::GtManagerService::GetInstance().Uninstall(g_bmsbuff->bundleParameter, nullptr,
             g_bmsbuff->bundleInstallerCallback);
     } else if (request->msgId == BMS_SCAN_PACKAGE_MSG) {
         OHOS::GtManagerService::GetInstance().ScanPackages();
+    } else {
+        return FALSE;
     }
     return TRUE;
 }

@@ -197,7 +197,6 @@ uint8_t GtBundleInstaller::Install(const char *path, char* &resultBundleName)
     if (errorCode != ERR_OK) {
         return errorCode;
     }
-    resultBundleName = Utils::Strdup(installRecord.bundleName);
 
     // rename bundle.json
     if (!RenameJsonFile(installRecord.bundleName, randStr)) {
