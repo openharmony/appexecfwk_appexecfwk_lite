@@ -754,9 +754,11 @@ bool BundleUtil::RemoveDir(const char *path)
             AdapterFree(curPath);
         }
     }
+#ifdef OHOS_APPEXECFWK_BMS_BUNDLEMANAGER
     for (auto node = list->Begin(); node != list->End(); node = node->next_) {
         AdapterFree(node->value_);
     }
+#endif
     if (!list->IsEmpty()) {
         delete list;
 #ifdef APP_PLATFORM_WATCHGT
