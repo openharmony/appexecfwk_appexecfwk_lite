@@ -13,11 +13,10 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_BUNDLE_MANAGER_INNER_H
-#define OHOS_BUNDLE_MANAGER_INNER_H
+#ifndef OHOS_BUNDLE_INSTALL_MSG_H
+#define OHOS_BUNDLE_INSTALL_MSG_H
 
-#include "ability_info.h"
-#include "slite_ability.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -25,21 +24,38 @@ extern "C" {
 #endif
 #endif /* __cplusplus */
 
+typedef enum {
+    BUNDLE_INSTALL_DOING = 0,
+    BUNDLE_INSTALL_OK = 1,
+    BUNDLE_INSTALL_FAIL = 2
+} InstallState;
+
+typedef struct {
+    char *bundleName;
+    char *label;
+    char *smallIconPath;
+    char *bigIconPath;
+    InstallState installState;
+    uint8_t installProcess;
+} BundleInstallMsg;
+
 /**
- * @brief Install a simulated bundle for the native ability .
+ * @brief Get the install state and install process of the bundle.
  *
- * @param abilityInfo Indicates the info of the ability.
- * @param ability Indicates the object of the ability.
- * @return Returns the install result.
+ * @param bundleName Indicates the name of the bundle.
+ * @param installState Obtains install state.
+ * @param installProcess Obtains install process.
+ * @return Returns success or not.
  *
  * @since 4.0
  * @version 4.0
  */
-int InstallNativeAbility(const AbilityInfo *abilityInfo, const OHOS::SliteAbility *ability);
+bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess);
+
 #ifdef __cplusplus
 #if __cplusplus
 }
 #endif
 #endif /* __cplusplus */
-#endif /* OHOS_BUNDLE_MANAGER_INNER_H */
+#endif /* OHOS_BUNDLE_INSTALL_MSG_H */
 /** @} */

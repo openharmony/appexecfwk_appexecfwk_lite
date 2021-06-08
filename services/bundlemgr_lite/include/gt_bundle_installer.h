@@ -28,6 +28,7 @@ extern "C" {
 #include "bundle_common.h"
 #include "bundle_info.h"
 #include "bundle_info_utils.h"
+#include "bundle_manager.h"
 #include "bundle_manager_inner.h"
 #include "stdint.h"
 
@@ -37,14 +38,13 @@ public:
     GtBundleInstaller() = default;
     ~GtBundleInstaller() = default;
 
-    uint8_t Install(const char *path, char* &resultBundleName);
+    uint8_t Install(const char *path, InstallerCallback installerCallback);
     uint8_t Uninstall(const char *bundleName);
-    int8_t getInstallationProgress(const char *bundleName);
 private:
     uint8_t PreCheckBundle(const char *path, int32_t &fp, SignatureInfo &signatureInfo, uint32_t &fileSize,
         uint8_t bundleStyle);
     uint8_t ProcessBundleInstall(const char *path, const char *randStr, InstallRecord &installRecord,
-        uint8_t bundleStyle);
+        uint8_t bundleStyle, InstallerCallback installerCallback);
     uint8_t HandleFileAndBackUpRecord(const InstallRecord &record, const char *tmpPath, const char *randStr,
         const char *dataPath, bool isUpdate);
     uint8_t UpdateBundleInfo(uint8_t bundleStyle, uint32_t labelId, uint32_t iconId, BundleInfo *bundleInfo,
@@ -68,7 +68,6 @@ private:
     uint8_t MoveRawFileToDataPath(const BundleInfo *bundleInfo);
     uint8_t TransformJsToBc(const char *codePath, InstallRecord &record);
 
-    InstallationProgress installationProgress_;
 };
 
 #define FREE_PRO_RESOURCE(fp, permissions, bundleInfo) \
