@@ -24,7 +24,6 @@ extern "C" {
 #endif
 #include "adapter.h"
 #include "appexecfwk_errors.h"
-#include "bundle_app_info.h"
 #include "bundle_util.h"
 #include "bundlems_log.h"
 #include "fcntl.h"

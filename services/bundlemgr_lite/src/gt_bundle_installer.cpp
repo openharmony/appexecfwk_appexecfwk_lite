@@ -23,7 +23,6 @@ extern "C" {
 }
 #endif
 #include "appexecfwk_errors.h"
-#include "bundle_app_info.h"
 #include "bundle_util.h"
 #include "bundlems_log.h"
 #include "dirent.h"
@@ -39,6 +38,13 @@ extern "C" {
 
 namespace OHOS {
 const char MATCHED_ALL_STR[] = ".*";
+const uint8_t OPERATION_DOING = 200;
+const uint8_t BMS_FIRST_FINISHED_PROCESS = 10;
+const uint8_t BMS_SECOND_FINISHED_PROCESS = 50;
+const uint8_t BMS_THIRD_FINISHED_PROCESS = 60;
+const uint8_t BMS_FOURTH_FINISHED_PROCESS = 70;
+const uint8_t BMS_FIFTH_FINISHED_PROCESS = 80;
+const uint8_t BMS_SIXTH_FINISHED_PROCESS = 90;
 const uint8_t RADN_NUM = 16;
 
 uint8_t GtBundleInstaller::PreCheckBundle(const char *path, int32_t &fp, SignatureInfo &signatureInfo,
@@ -157,12 +163,8 @@ uint8_t GtBundleInstaller::SwitchErrorCode(int32_t errorCode)
     }
 }
 
-uint8_t GtBundleInstaller::Install(const char *path, char* &resultBundleName)
+uint8_t GtBundleInstaller::Install(const char *path, InstallerCallback installerCallback)
 {
-    if (installationProgress_.bundleName != nullptr) {
-        AdapterFree(installationProgress_.bundleName);
-        installationProgress_.bundleName = nullptr;
-    }
     if (path == nullptr) {
         return ERR_APPEXECFWK_INSTALL_FAILED_PARAM_ERROR;
     }
@@ -193,10 +195,11 @@ uint8_t GtBundleInstaller::Install(const char *path, char* &resultBundleName)
         return ERR_APPEXECFWK_INSTALL_FAILED_INTERNAL_ERROR;
     }
 
-    uint8_t errorCode = ProcessBundleInstall(path, randStr, installRecord, bundleStyle);
+    uint8_t errorCode = ProcessBundleInstall(path, randStr, installRecord, bundleStyle, installerCallback);
     if (errorCode != ERR_OK) {
         return errorCode;
     }
+    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_SIXTH_FINISHED_PROCESS, installerCallback);
 
     // rename bundle.json
     if (!RenameJsonFile(installRecord.bundleName, randStr)) {
@@ -216,16 +219,8 @@ uint8_t GtBundleInstaller::Install(const char *path, char* &resultBundleName)
     return ERR_OK;
 }
 
-int8_t GtBundleInstaller::getInstallationProgress(const char *bundleName)
-{
-    if (strcmp(installationProgress_.bundleName, bundleName) == 0) {
-        return installationProgress_.installStateLabel;
-    }
-    return BMS_NOT_INSTALLED;
-}
-
 uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *randStr, InstallRecord &installRecord,
-    uint8_t bundleStyle)
+    uint8_t bundleStyle, InstallerCallback installerCallback)
 {
     SignatureInfo signatureInfo;
     signatureInfo = {.bundleName = nullptr, .appId = nullptr, .restricPermission = nullptr, .restricNum = 0};
@@ -237,14 +232,14 @@ uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *ra
         .bundleName = nullptr, .moduleDescriptionId = 0, .abilityRes = nullptr, .totalNumOfAbilityRes = 0
     };
     BundleInfo *bundleInfo = nullptr;
-
+    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_FIRST_FINISHED_PROCESS, installerCallback);
     uint8_t errorCode = PreCheckBundle(path, fp, signatureInfo, fileSize, bundleStyle);
     CHECK_PRO_RESULT(errorCode, fp, permissions, bundleInfo, signatureInfo);
     // parse HarmoyProfile.json, get permissions and bundleInfo
     errorCode = GtBundleParser::ParseHapProfile(fp, fileSize, permissions, bundleRes, &bundleInfo);
     CHECK_PRO_RESULT(errorCode, fp, permissions, bundleInfo, signatureInfo);
-    installationProgress_.bundleName = Utils::Strdup(bundleInfo->bundleName);
-    installationProgress_.installStateLabel = BMS_FIRST_FINISHED_PROCESS;
+    SetCurrentBundle(bundleInfo->bundleName);
+    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_SECOND_FINISHED_PROCESS, installerCallback);
     // terminate current runing app
     uint32_t labelId = (bundleRes.abilityRes != nullptr) ? bundleRes.abilityRes->labelId : 0;
     uint32_t iconId = (bundleRes.abilityRes != nullptr) ? bundleRes.abilityRes->iconId : 0;
@@ -268,6 +263,7 @@ uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *ra
     errorCode = GtBundleExtractor::ExtractHap(tmpCodePath, installRecord.bundleName, fp, fileSize, bundleStyle);
     close(fp);
     CHECK_PRO_PART_ROLLBACK(errorCode, tmpCodePath, permissions, bundleInfo, signatureInfo);
+    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_THIRD_FINISHED_PROCESS, installerCallback);
     // get js engine version
 #ifdef BC_TRANS_ENABLE
     char *jsEngineVersion = get_jerry_version_no();
@@ -278,8 +274,7 @@ uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *ra
     errorCode = TransformJsToBc(tmpCodePath, installRecord);
     CHECK_PRO_PART_ROLLBACK(errorCode, tmpCodePath, permissions, bundleInfo, signatureInfo);
 #endif
-
-    installationProgress_.installStateLabel = BMS_THIRD_FINISHED_PROCESS;
+    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_FOURTH_FINISHED_PROCESS, installerCallback);
     // rename install path and record install infomation
     bool isUpdate = GtManagerService::GetInstance().QueryBundleInfo(installRecord.bundleName) != nullptr;
     errorCode = HandleFileAndBackUpRecord(installRecord, tmpCodePath, randStr, bundleInfo->dataPath, isUpdate);
@@ -289,8 +284,9 @@ uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *ra
     // move rawfile to data path when rawfile is exists
     errorCode = MoveRawFileToDataPath(bundleInfo);
     CHECK_PRO_ROLLBACK(errorCode, permissions, bundleInfo, signatureInfo, randStr);
-
-    installationProgress_.installStateLabel = BMS_FOUR_FINISHED_PROCESS;
+    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_FIFTH_FINISHED_PROCESS, installerCallback);
+    errorCode = StorePermissions(installRecord.bundleName, permissions.permissionTrans, permissions.permNum,
+        isUpdate);
     errorCode = UpdateBundleInfo(bundleStyle, labelId, iconId, bundleInfo, isUpdate);
     CHECK_PRO_ROLLBACK(errorCode, permissions, bundleInfo, signatureInfo, randStr);
     // free memory
@@ -508,7 +504,6 @@ uint8_t GtBundleInstaller::UpdateBundleInfo(uint8_t bundleStyle, uint32_t labelI
         } else {
             bundleInfo->isSystemApp = false;
             GtManagerService::GetInstance().AddBundleInfo(bundleInfo);
-            GtManagerService::GetInstance().SendBundleListChangedToLauncher(BUNDLE_INSTALL, bundleInfo->bundleName);
         }
     } else {
         BundleInfo *oldBundleInfo = GtManagerService::GetInstance().QueryBundleInfo(bundleInfo->bundleName);
@@ -520,7 +515,6 @@ uint8_t GtBundleInstaller::UpdateBundleInfo(uint8_t bundleStyle, uint32_t labelI
         if (!GtManagerService::GetInstance().UpdateBundleInfo(bundleInfo)) {
             return ERR_APPEXECFWK_INSTALL_FAILED_INTERNAL_ERROR;
         }
-        GtManagerService::GetInstance().SendBundleListChangedToLauncher(BUNDLE_UPDATE, bundleInfo->bundleName);
     }
     // update bundle res list
     return AddBundleResList(bundleInfo->bundleName, labelId, iconId);
@@ -574,6 +568,10 @@ uint8_t GtBundleInstaller::Uninstall(const char *bundleName)
         return ERR_APPEXECFWK_UNINSTALL_FAILED_INTERNAL_ERROR;
     }
 
+    if (DeletePermissions(const_cast<char *>(bundleName)) < 0) {
+        return ERR_APPEXECFWK_UNINSTALL_FAILED_DELETE_PERMISSIONS_ERROR;
+    }
+
     bool res = CheckIsThirdSystemBundle(bundleName);
     if (!(BundleUtil::RemoveDir(bundleInfo->codePath) && BundleUtil::RemoveDir(bundleInfo->dataPath))) {
         GtManagerService::GetInstance().RemoveBundleInfo(bundleName);
@@ -581,7 +579,6 @@ uint8_t GtBundleInstaller::Uninstall(const char *bundleName)
         if (!res) {
             GtManagerService::GetInstance().ReduceNumOfThirdBundles();
         }
-        GtManagerService::GetInstance().SendBundleListChangedToLauncher(BUNDLE_UNINSTALL, bundleName);
         return ERR_APPEXECFWK_UNINSTALL_FAILED_DELETE_DIRS_ERROR;
     }
 
@@ -591,7 +588,6 @@ uint8_t GtBundleInstaller::Uninstall(const char *bundleName)
         GtManagerService::GetInstance().ReduceNumOfThirdBundles();
     }
     if (unlink(bundleJsonPath) < 0) {
-        GtManagerService::GetInstance().SendBundleListChangedToLauncher(BUNDLE_UNINSTALL, bundleName);
         return ERR_APPEXECFWK_UNINSTALL_FAILED_DELETE_RECORD_INFO_ERROR;
     }
 
@@ -599,7 +595,6 @@ uint8_t GtBundleInstaller::Uninstall(const char *bundleName)
         RecordThirdSystemBundle(bundleName, UNINSTALL_THIRD_SYSTEM_BUNDLE_JSON);
     }
 
-    GtManagerService::GetInstance().SendBundleListChangedToLauncher(BUNDLE_UNINSTALL, bundleName);
     return ERR_OK;
 }
 
@@ -730,6 +725,7 @@ uint8_t GtBundleInstaller::StorePermissions(const char *bundleName, PermissionTr
 {
     if (permNum == 0) {
         if (isUpdate) {
+            int32_t ret = DeletePermissions(bundleName);
             HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] delete permissions, result is %d", ret);
         }
         return ERR_OK;
@@ -741,6 +737,11 @@ uint8_t GtBundleInstaller::StorePermissions(const char *bundleName, PermissionTr
 
     if (!BundleUtil::IsDir(PERMISSIONS_PATH)) {
         BundleUtil::MkDirs(PERMISSIONS_PATH);
+    }
+
+    if (SaveOrUpdatePermissions(const_cast<char *>(bundleName), permissions, permNum,
+        static_cast<IsUpdate>(isUpdate)) != 0) {
+            return ERR_APPEXECFWK_INSTALL_FAILED_STORE_PERMISSIONS_ERROR;
     }
     return ERR_OK;
 }

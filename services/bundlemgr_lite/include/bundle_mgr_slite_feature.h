@@ -35,7 +35,7 @@ public:
     static uint8_t QueryAbilityInfo(const Want *want, AbilityInfo *abilityInfo);
     static uint8_t GetBundleInfo(const char *bundleName, int32_t flags, BundleInfo *bundleInfo);
     static uint8_t GetBundleInfos(int32_t flags, BundleInfo **bundleInfos, int32_t *len);
-    static int8_t GetInstallState(const char *bundleName);
+    static bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess);
 
     static BundleMgrSliteFeature *GetInstance()
     {
