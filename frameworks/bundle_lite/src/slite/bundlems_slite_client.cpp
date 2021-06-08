@@ -150,11 +150,11 @@ uint8_t BundleMsClient::GetBundleInfos (int32_t flags, BundleInfo **bundleInfos,
     return bmsProxy_->GetBundleInfos(flags, bundleInfos, len);
 }
 
-int8_t BundleMsClient::GetInstallState (const char *bundleName) const
+bool BundleMsClient::GetInstallState (const char *bundleName, InstallState *installState, uint8_t *installProcess) const
 {
     if (!Initialize()) {
-        return -1;
+        return false;
     }
-    return bmsProxy_->GetInstallState(bundleName);
+    return bmsProxy_->GetInstallState(bundleName, installState, installProcess);
 }
 } //  namespace OHOS

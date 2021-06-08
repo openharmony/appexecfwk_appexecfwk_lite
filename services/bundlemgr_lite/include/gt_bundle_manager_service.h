@@ -17,7 +17,6 @@
 #define OHOS_GT_BUNDLE_MANAGER_SERVICE_H
 
 #include "adapter.h"
-#include "bundle_app_info.h"
 #include "bundle_info.h"
 #include "bundle_map.h"
 #include "cJSON.h"
@@ -25,6 +24,7 @@
 #include "stdint.h"
 #include "want.h"
 #include "install_param.h"
+#include "bundle_install_msg.h"
 #include "bundle_manager.h"
 #include "los_list.h"
 #include "ohos_types.h"
@@ -42,6 +42,12 @@ struct AppInfoList {
     LOS_DL_LIST appDoubleList;
     char filePath[MAX_APP_FILE_PATH_LEN];
 };
+
+typedef enum {
+    BUNDLE_INSTALL,
+    BUNDLE_UNINSTALL,
+    BUNDLE_UPDATE,
+} BundleState;
 
 class GtManagerService {
 public:
@@ -67,7 +73,9 @@ public:
     void ReportInstallProcess(const char *bundleName, uint8_t bundleStyle, uint8_t process);
     void AddNumOfThirdBundles();
     void ReduceNumOfThirdBundles();
-    int8_t GetInstallState(const char *bundleName) const;
+    int32_t ReportInstallCallback(uint8_t errCode, uint8_t installState,
+        uint8_t process, InstallerCallback installerCallback);
+    bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess);
 
 private:
     GtManagerService();
@@ -96,7 +104,7 @@ private:
     GtBundleInstaller *installer_;
     BundleMap *bundleMap_;
     List<BundleRes *> *bundleResList_;
-    BundleInstallMsg *systemBundleInstallMsg_;
+    BundleInstallMsg *bundleInstallMsg_;
     char *jsEngineVer_;
     uint32_t installedThirdBundleNum_;
 };
@@ -105,6 +113,8 @@ private:
 extern "C" {
 void EnableServiceWdg(void);
 void DisableServiceWdg(void);
+void SetCurrentBundle(const char *name);
+const char *GetCurrentBundle();
 }
 
 #endif // OHOS_GT_BUNDLE_MANAGER_SERVICE_H

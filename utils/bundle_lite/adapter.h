@@ -79,9 +79,9 @@ const unsigned int RETRY_TIMES = 10;
 #define APP_ERRCODE_EXTRA(code1, code2)
 #define APP_EVENT(code1)
 #define RecordAbiityInfoEvt(code1)
-#define MutexDelete(a)
-#define MutexAcquire(a, b)
-#define MutexRelease(a)
+#define MutexDelete(a) osMutexDelete(a)
+#define MutexAcquire(a, b) osMutexAcquire(a, b)
+#define MutexRelease(a) osMutexRelease(a)
 #define SvrFree AdapterFree
 #define SvrMalloc AdapterMalloc
 

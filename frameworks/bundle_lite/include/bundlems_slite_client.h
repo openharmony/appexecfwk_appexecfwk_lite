@@ -19,6 +19,7 @@
 #include "iproxy_client.h"
 #include "nocopyable.h"
 #include "want.h"
+#include "bundle_install_msg.h"
 #include "bundle_service_interface.h"
 
 namespace OHOS {
@@ -44,7 +45,7 @@ public:
 
     uint8_t GetBundleInfos(int32_t flags, BundleInfo **bundleInfos, int32_t *len) const;
 
-    int8_t GetInstallState(const char *bundleName) const;
+    bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess) const;
 
 private:
     BundleMsClient() = default;

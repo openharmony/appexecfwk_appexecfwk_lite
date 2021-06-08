@@ -15,11 +15,12 @@
 
 #include "bundle_manager_inner.h"
 
+#include "bundle_install_msg.h"
 #include "bundlems_slite_client.h"
 
 extern "C" {
-int GetInstallState(const char *bundleName)
+bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess)
 {
-    return OHOS::BundleMsClient::GetInstance().GetInstallState(bundleName);
+    return OHOS::BundleMsClient::GetInstance().GetInstallState(bundleName, installState, installProcess);
 }
 }

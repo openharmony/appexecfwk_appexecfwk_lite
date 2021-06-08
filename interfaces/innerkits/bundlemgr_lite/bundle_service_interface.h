@@ -22,6 +22,7 @@
 #include "install_param.h"
 #include "bundle_manager.h"
 #include "bundle_info.h"
+#include "bundle_install_msg.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -48,7 +49,7 @@ struct BmsSliteInterface {
     uint8_t (*QueryAbilityInfo)(const Want *want, AbilityInfo *abilityInfo);
     uint8_t (*GetBundleInfo)(const char *bundleName, int32_t flags, BundleInfo *bundleInfo);
     uint8_t (*GetBundleInfos)(int32_t flags, BundleInfo **bundleInfos, int32_t *len);
-    int8_t (*GetInstallState)(const char *bundleName);
+    bool (*GetInstallState)(const char *bundleName, InstallState *installState, uint8_t *installProcess);
 };
 #ifdef __cplusplus
 #if __cplusplus
