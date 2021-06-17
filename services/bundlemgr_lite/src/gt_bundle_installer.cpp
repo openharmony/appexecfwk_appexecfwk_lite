@@ -285,8 +285,6 @@ uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *ra
     errorCode = MoveRawFileToDataPath(bundleInfo);
     CHECK_PRO_ROLLBACK(errorCode, permissions, bundleInfo, signatureInfo, randStr);
     (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_FIFTH_FINISHED_PROCESS, installerCallback);
-    errorCode = StorePermissions(installRecord.bundleName, permissions.permissionTrans, permissions.permNum,
-        isUpdate);
     errorCode = UpdateBundleInfo(bundleStyle, labelId, iconId, bundleInfo, isUpdate);
     CHECK_PRO_ROLLBACK(errorCode, permissions, bundleInfo, signatureInfo, randStr);
     // free memory
@@ -566,10 +564,6 @@ uint8_t GtBundleInstaller::Uninstall(const char *bundleName)
     char bundleJsonPath[PATH_LENGTH] = { 0 };
     if (sprintf_s(bundleJsonPath, PATH_LENGTH, "%s%s%s", JSON_PATH, bundleName, JSON_SUFFIX) < 0) {
         return ERR_APPEXECFWK_UNINSTALL_FAILED_INTERNAL_ERROR;
-    }
-
-    if (DeletePermissions(const_cast<char *>(bundleName)) < 0) {
-        return ERR_APPEXECFWK_UNINSTALL_FAILED_DELETE_PERMISSIONS_ERROR;
     }
 
     bool res = CheckIsThirdSystemBundle(bundleName);
