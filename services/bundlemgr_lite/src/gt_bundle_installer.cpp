@@ -18,6 +18,7 @@
 
 #ifdef __cplusplus
 extern "C" {
+#include "generate-bytecode.h"
 #endif
 #ifdef __cplusplus
 }
