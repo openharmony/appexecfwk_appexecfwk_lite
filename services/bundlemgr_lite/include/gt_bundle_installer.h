@@ -16,8 +16,6 @@
 #ifndef OHOS_GT_BUNDLE_INSTALLER_H
 #define OHOS_GT_BUNDLE_INSTALLER_H
 
-#include "generate-bytecode.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
