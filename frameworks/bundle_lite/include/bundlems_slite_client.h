@@ -47,6 +47,8 @@ public:
 
     bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess) const;
 
+    bool GetUninstallState(const char *bundleName, UninstallState *uninstallState) const;
+
 private:
     BundleMsClient() = default;
 
