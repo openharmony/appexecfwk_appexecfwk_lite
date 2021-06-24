@@ -23,4 +23,9 @@ bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t
 {
     return OHOS::BundleMsClient::GetInstance().GetInstallState(bundleName, installState, installProcess);
 }
+
+bool GetUninstallState(const char *bundleName, UninstallState *uninstallState)
+{
+    return OHOS::BundleMsClient::GetInstance().GetUninstallState(bundleName, uninstallState);
+}
 }
