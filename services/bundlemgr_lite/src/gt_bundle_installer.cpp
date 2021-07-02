@@ -18,7 +18,6 @@
 
 #ifdef __cplusplus
 extern "C" {
-#include "generate-bytecode.h"
 #endif
 #ifdef __cplusplus
 }
@@ -235,12 +234,12 @@ uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *ra
     BundleInfo *bundleInfo = nullptr;
     (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_FIRST_FINISHED_PROCESS, installerCallback);
     uint8_t errorCode = PreCheckBundle(path, fp, signatureInfo, fileSize, bundleStyle);
+    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_SECOND_FINISHED_PROCESS, installerCallback);
     CHECK_PRO_RESULT(errorCode, fp, permissions, bundleInfo, signatureInfo);
     // parse HarmoyProfile.json, get permissions and bundleInfo
     errorCode = GtBundleParser::ParseHapProfile(fp, fileSize, permissions, bundleRes, &bundleInfo);
     CHECK_PRO_RESULT(errorCode, fp, permissions, bundleInfo, signatureInfo);
     SetCurrentBundle(bundleInfo->bundleName);
-    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_SECOND_FINISHED_PROCESS, installerCallback);
     // terminate current runing app
     uint32_t labelId = (bundleRes.abilityRes != nullptr) ? bundleRes.abilityRes->labelId : 0;
     uint32_t iconId = (bundleRes.abilityRes != nullptr) ? bundleRes.abilityRes->iconId : 0;
@@ -470,6 +469,12 @@ uint8_t GtBundleInstaller::TransformJsToBc(const char *codePath, InstallRecord &
     char *jsPath = BundleUtil::Strscat(jsPathComp, sizeof(jsPathComp) / sizeof(char *));
     if (jsPath == nullptr) {
         return ERR_APPEXECFWK_INSTALL_FAILED_INTERNAL_ERROR;
+    }
+    EXECRES result = walk_directory(jsPath);
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] transform js to bc when install, result is %d", result);
+    if (result != EXCE_ACE_JERRY_EXEC_OK) {
+        AdapterFree(jsPath);
+        return ERR_APPEXECFWK_INSTALL_FAILED_TRANSFORM_BC_FILE_ERROR;
     }
     AdapterFree(jsPath);
 #ifdef BC_TRANS_ENABLE
