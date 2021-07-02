@@ -28,6 +28,7 @@
 #include "gt_bundle_extractor.h"
 #include "gt_bundle_parser.h"
 #include "gt_extractor_util.h"
+#include "jerryscript_adapter.h"
 #include "los_tick.h"
 #include "stdio.h"
 #include "sys/stat.h"
@@ -335,6 +336,12 @@ void GtManagerService::ClearSystemBundleInstallMsg()
 
 void GtManagerService::ScanPackages()
 {
+    JerryBmsPsRamMemInit();
+    bms_task_context_init();
+    jsEngineVer_ = get_jerry_version_no();
+    if (jsEngineVer_ == nullptr) {
+        HILOG_WARN(HILOG_MODULE_AAFWK, "[BMS] get jsEngine version fail when restart!");
+    }
     if (!BundleUtil::IsDir(JSON_PATH_NO_SLASH_END)) {
         BundleUtil::MkDirs(JSON_PATH_NO_SLASH_END);
         InstallAllSystemBundle();
@@ -742,6 +749,14 @@ void GtManagerService::TransformJsToBc(const char *codePath, const char *bundleJ
         return;
     }
 
+    EXECRES result = walk_directory(jsPath);
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] transform js to bc, result is %d", result);
+    if (result != EXCE_ACE_JERRY_EXEC_OK) {
+        result = walk_del_bytecode(jsPath);
+        HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] delete byte code, result is %d", result);
+        AdapterFree(jsPath);
+        return;
+    }
     AdapterFree(jsPath);
 
     cJSON *resultObj = cJSON_CreateNumber(0);
