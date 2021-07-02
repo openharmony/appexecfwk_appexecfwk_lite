@@ -15,7 +15,11 @@
 
 #include "extractor_util.h"
 
+#include <dirent.h>
+#include <fcntl.h>
 #include <fstream>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "log.h"
 
@@ -62,6 +66,10 @@ bool ExtractorUtil::ExtractFileToPath(const std::string &filePath, const std::st
     }
     fileStream.clear();
     fileStream.close();
+
+    int fd = open(filePath.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+    fsync(fd);
+    close(fd);
     return true;
 }
 
