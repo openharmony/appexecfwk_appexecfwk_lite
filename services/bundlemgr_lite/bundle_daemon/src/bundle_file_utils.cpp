@@ -142,6 +142,7 @@ bool BundleFileUtils::WriteFile(const char *file, const void *buffer, uint32_t s
         return false;
     }
 
+    fsync(fp);
     close(fp);
     return true;
 }
