@@ -67,7 +67,6 @@ public:
     uint8_t GetBundleInfo(const char *bundleName, int32_t flags, BundleInfo& bundleInfo);
     uint8_t GetBundleInfos(const int flags, BundleInfo **bundleInfos, int32_t *len);
     void ScanPackages();
-    void SendBundleListChangedToLauncher(BundleState state, const char *bundleName);
     BundleInfo *QueryBundleInfo(const char *bundleName);
     void RemoveBundleInfo(const char *bundleName);
     void AddBundleInfo(BundleInfo *info);
