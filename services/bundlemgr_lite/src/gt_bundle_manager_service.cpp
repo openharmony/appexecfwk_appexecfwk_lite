@@ -38,7 +38,6 @@
 
 namespace OHOS {
 const uint8_t PAIR_VALUE = 2;
-const uint8_t FINISHED_PROCESS = 100;
 const uint8_t OPERATION_DOING = 200;
 const uint8_t BMS_INSTALLATION_START = 101;
 const uint8_t BMS_UNINSTALLATION_START = 104;
@@ -175,10 +174,18 @@ bool GtManagerService::Uninstall(const char *bundleName, const InstallParam *ins
 
 bool GtManagerService::GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess)
 {
+    if (bundleName == nullptr) {
+        retrun false;
+    }
     BundleInfo *installedInfo = bundleMap_->Get(bundleName);
     if (installedInfo != nullptr) {
         *installState = BUNDLE_INSTALL_OK;
         *installProcess = BMS_INSTALLATION_COMPLETED;
+        return true;
+    }
+    if (bundleInstallMsg_ == nullptr) {
+        *installState = BUNDLE_INSTALL_FAIL;
+        *installProcess = 0;
         return true;
     }
     if (strcmp(bundleName, bundleInstallMsg_->bundleName) == 0) {
@@ -849,21 +856,6 @@ void GtManagerService::AddNumOfThirdBundles()
 void GtManagerService::ReduceNumOfThirdBundles()
 {
     installedThirdBundleNum_--;
-}
-
-void GtManagerService::SendBundleListChangedToLauncher(BundleState state, const char *bundleName)
-{
-    if (bundleName == nullptr) {
-        return;
-    }
-    char *innerBundleName = reinterpret_cast<char *>(SvrMalloc(strlen(bundleName) + 1));
-    if (innerBundleName == nullptr) {
-        return;
-    }
-    if (strncpy_s(innerBundleName, strlen(bundleName) + 1, bundleName, strlen(bundleName)) != EOK) {
-        SvrFree(innerBundleName);
-        return;
-    }
 }
 
 int32_t GtManagerService::ReportInstallCallback(uint8_t errCode, uint8_t installState,
