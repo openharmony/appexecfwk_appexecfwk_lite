@@ -175,7 +175,7 @@ bool GtManagerService::Uninstall(const char *bundleName, const InstallParam *ins
 bool GtManagerService::GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess)
 {
     if (bundleName == nullptr) {
-        retrun false;
+        return false;
     }
     BundleInfo *installedInfo = bundleMap_->Get(bundleName);
     if (installedInfo != nullptr) {
