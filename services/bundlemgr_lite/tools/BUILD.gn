@@ -57,8 +57,6 @@ executable("bm") {
     "${appexecfwk_lite_path}/interfaces/kits/bundle_lite",
     "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
     "//foundation/distributedschedule/samgr_lite/interfaces/kits/registry",
-    "//kernel/liteos_a/kernel/include",
-    "//kernel/liteos_a/kernel/common",
     "//third_party/cJSON",
     "//utils/native/lite/include",
   ]
