@@ -49,6 +49,8 @@ public:
 
     bool GetUninstallState(const char *bundleName, UninstallState *uninstallState) const;
 
+    uint32_t GetBundleSize(const char *bundleName) const;
+
 private:
     BundleMsClient() = default;
 

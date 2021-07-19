@@ -95,20 +95,25 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
         return false;
     }
     // set bundleName、label、smallIconPath、bigIconPath in bundleInstallMsg_
-    bool isSuccess = GtBundleExtractor::ExtractInstallMsg(path, &(bundleInstallMsg_->bundleName),
+    uint8_t ret = GtBundleExtractor::ExtractInstallMsg(path, &(bundleInstallMsg_->bundleName),
         &(bundleInstallMsg_->label), &(bundleInstallMsg_->smallIconPath),
         &(bundleInstallMsg_->bigIconPath));
-    if (!isSuccess) {
+
+    if (ret != 0) {
+        char *name = strchr(path, '/');
+        bundleInstallMsg_->bundleName = Utils::Strdup(name + 1);
+        (void) ReportInstallCallback(ret, BUNDLE_INSTALL_FAIL, BMS_INSTALLATION_COMPLETED, installerCallback);
         // delete resource temp dir
         (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
         ClearSystemBundleInstallMsg();
+        AdapterFree(path);
         return false;
     }
 
     SetCurrentBundle(bundleInstallMsg_->bundleName);
     (void) ReportInstallCallback(OPERATION_DOING, 0, BMS_INSTALLATION_START, installerCallback);
     DisableServiceWdg();
-    uint8_t ret = installer_->Install(path, installerCallback);
+    ret = installer_->Install(path, installerCallback);
     EnableServiceWdg();
     if (ret == 0) {
         (void) ReportInstallCallback(ret, BUNDLE_INSTALL_OK, BMS_INSTALLATION_COMPLETED, installerCallback);
@@ -196,6 +201,27 @@ bool GtManagerService::GetInstallState(const char *bundleName, InstallState *ins
     *installState = BUNDLE_INSTALL_FAIL;
     *installProcess = 0;
     return true;
+}
+
+uint32_t GtManagerService::GetBundleSize(const char *bundleName)
+{
+    if (bundleName == nullptr) {
+        return 0;
+    }
+    BundleInfo *installedInfo = bundleMap_->Get(bundleName);
+    if (installedInfo == nullptr) {
+        HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] failed to get bundle size because the bundle does not exist!");
+        return 0;
+    }
+    char *codePath = installedInfo->codePath;
+    uint32_t codeBundleSize = BundleUtil::GetFileFolderSize(codePath);
+    if (codeBundleSize == 0) {
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] failed to get code bundle size!");
+        return 0;
+    }
+    char *dataPath = installedInfo->dataPath;
+    uint32_t dataBundleSize = BundleUtil::GetFileFolderSize(dataPath);
+    return codeBundleSize + dataBundleSize;
 }
 
 bool GtManagerService::GetUninstallState(const char *bundleName, UninstallState *uninstallState)
@@ -290,10 +316,10 @@ void GtManagerService::InstallSystemBundle(const char *systemAppPath)
         return;
     }
     // set bundleName、label、smallIconPath、bigIconPath in bundleInstallMsg_
-    bool ret = GtBundleExtractor::ExtractInstallMsg(systemAppPath, &(bundleInstallMsg_->bundleName),
+    uint8_t ret = GtBundleExtractor::ExtractInstallMsg(systemAppPath, &(bundleInstallMsg_->bundleName),
         &(bundleInstallMsg_->label), &(bundleInstallMsg_->smallIconPath),
         &(bundleInstallMsg_->bigIconPath));
-    if (!ret) {
+    if (ret != 0) {
         // delete resource temp dir
         (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
         ClearSystemBundleInstallMsg();

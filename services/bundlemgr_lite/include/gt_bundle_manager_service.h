@@ -83,6 +83,7 @@ public:
         uint8_t process, InstallerCallback installerCallback);
     bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess);
     bool GetUninstallState(const char *bundleName, UninstallState *uninstallState);
+    uint32_t GetBundleSize(const char *bundleName);
 
 private:
     GtManagerService();

@@ -26,7 +26,7 @@ public:
         uint8_t bundleStyle);
     static char *ExtractHapProfile(int32_t fp, uint32_t totalFileSize);
     static uint8_t ExtractBundleParam(const char *path, int32_t &fpStart, char **bundleName);
-    static bool ExtractInstallMsg(const char *path, char **bundleName, char **label, char **smallIconPath,
+    static uint8_t ExtractInstallMsg(const char *path, char **bundleName, char **label, char **smallIconPath,
         char **bigIconPath);
 private:
     static uint8_t ExtractFileDataPos(int32_t fp, uint64_t &filePos);
