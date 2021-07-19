@@ -33,7 +33,7 @@ BundleMgrSliteFeatureImpl g_bmsSliteImpl = {
     .GetBundleInfo = BundleMgrSliteFeature::GetBundleInfo,
     .GetBundleInfos = BundleMgrSliteFeature::GetBundleInfos,
     .GetInstallState = BundleMgrSliteFeature::GetInstallState,
-    .GetUninstallState = BundleMgrSliteFeature::GetUninstallState,
+    .GetBundleSize = BundleMgrSliteFeature::GetBundleSize,
     DEFAULT_IUNKNOWN_ENTRY_END
 };
 
@@ -128,8 +128,8 @@ bool BundleMgrSliteFeature::GetInstallState(const char *bundleName, InstallState
     return OHOS::GtManagerService::GetInstance().GetInstallState(bundleName, installState, installProcess);
 }
 
-bool BundleMgrSliteFeature::GetUninstallState(const char *bundleName, UninstallState *uninstallState)
+uint32_t BundleMgrSliteFeature::GetBundleSize(const char *bundleName)
 {
-    return OHOS::GtManagerService::GetInstance().GetUninstallState(bundleName, uninstallState);
+    return OHOS::GtManagerService::GetInstance().GetBundleSize(bundleName);
 }
 } // namespace OHOS
