@@ -68,6 +68,10 @@ bool ExtractorUtil::ExtractFileToPath(const std::string &filePath, const std::st
     fileStream.close();
 
     int fd = open(filePath.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
+        HILOG_ERROR(HILOG_MODULE_APP, "ExtractFileToPath open fail");
+        return false;
+    }
     fsync(fd);
     close(fd);
     return true;
