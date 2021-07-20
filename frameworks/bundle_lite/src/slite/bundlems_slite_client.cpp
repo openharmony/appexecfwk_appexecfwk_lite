@@ -165,4 +165,12 @@ bool BundleMsClient::GetUninstallState (const char *bundleName, UninstallState *
     }
     return bmsProxy_->GetUninstallState(bundleName, uninstallState);
 }
+
+uint32_t BundleMsClient::GetBundleSize (const char *bundleName) const
+{
+    if (!Initialize()) {
+        return -1;
+    }
+    return bmsProxy_->GetBundleSize(bundleName);
+}
 } //  namespace OHOS

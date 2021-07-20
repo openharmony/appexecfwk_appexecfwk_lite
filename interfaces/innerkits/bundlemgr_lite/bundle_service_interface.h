@@ -51,6 +51,7 @@ struct BmsSliteInterface {
     uint8_t (*GetBundleInfos)(int32_t flags, BundleInfo **bundleInfos, int32_t *len);
     bool (*GetInstallState)(const char *bundleName, InstallState *installState, uint8_t *installProcess);
     bool (*GetUninstallState)(const char *bundleName, UninstallState *uninstallState);
+    uint32_t (*GetBundleSize)(const char *bundleName);
 };
 #ifdef __cplusplus
 #if __cplusplus

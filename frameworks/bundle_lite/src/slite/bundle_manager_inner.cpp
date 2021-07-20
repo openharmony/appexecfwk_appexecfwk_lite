@@ -28,4 +28,9 @@ bool GetUninstallState(const char *bundleName, UninstallState *uninstallState)
 {
     return OHOS::BundleMsClient::GetInstance().GetUninstallState(bundleName, uninstallState);
 }
+
+uint32_t GetBundleSize(const char *bundleName)
+{
+    return OHOS::BundleMsClient::GetInstance().GetBundleSize(bundleName);
+}
 }

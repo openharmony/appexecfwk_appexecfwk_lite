@@ -68,6 +68,15 @@ bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t
  */
 bool GetUninstallState(const char *bundleName, UninstallState *uninstallState);
 
+/**
+ * @brief Get the bundle size.
+ *
+ * @param bundleName Indicates the name of the bundle.
+ * @return Returns bundle size or returns 0 if get bundle size failed.
+ *
+ */
+uint32_t GetBundleSize(const char *bundleName);
+
 #ifdef __cplusplus
 #if __cplusplus
 }
