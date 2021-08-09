@@ -179,45 +179,45 @@ bool GtBundleExtractor::ExtractResourceFile(const char *path, int32_t fp, uint32
     return true;
 }
 
-bool GtBundleExtractor::ExtractInstallMsg(const char *path, char **bundleName, char **label, char **smallIconPath,
+uint8_t GtBundleExtractor::ExtractInstallMsg(const char *path, char **bundleName, char **label, char **smallIconPath,
     char **bigIconPath)
 {
     if (!BundleUtil::CheckRealPath(path)) {
-        return false;
+        return ERR_APPEXECFWK_INSTALL_FAILED_PARAM_ERROR;
     }
 
     int32_t totalFileSize = APPVERI_GetUnsignedFileLength(path);
     if (totalFileSize == V_ERR) {
-        return false;
+        return ERR_APPEXECFWK_INSTALL_FAILED_INTERNAL_ERROR;
     }
 
     char *emptyJsPathComp[] = {const_cast<char *>(TMP_RESOURCE_DIR), const_cast<char *>(ASSET_JS_PATH)};
     char *emptyJsPath = BundleUtil::Strscat(emptyJsPathComp, sizeof(emptyJsPathComp) / sizeof(char *));
     if (emptyJsPath == nullptr) {
-        return false;
+        return ERR_APPEXECFWK_INSTALL_FAILED_INTERNAL_ERROR;
     }
 
     if (!BundleUtil::MkDirs(emptyJsPath)) {
         AdapterFree(emptyJsPath);
-        return false;
+        return ERR_APPEXECFWK_INSTALL_FAILED_CREATE_DATA_DIR_ERROR;
     }
     AdapterFree(emptyJsPath);
 
     int32_t fp = open(path, O_RDONLY, S_IREAD | S_IWRITE);
     if (fp < 0) {
-        return false;
+        return ERR_APPEXECFWK_INSTALL_FAILED_FILE_NOT_EXISTS;
     }
     // extractor config.json、 resources dir and resources.index in TMP_RESOURCE_DIR
     if (!ExtractResourceFile(TMP_RESOURCE_DIR, fp, static_cast<uint32_t>(totalFileSize))) {
         close(fp);
-        return false;
+        return ERR_APPEXECFWK_INSTALL_FAILED_PARSE_PROFILE_ERROR;
     }
     close(fp);
     // get bundleName、 label、 smallIconPath and bigIconPath from bundleInfo
     BundleRes bundleRes = { 0 };
     BundleInfo *bundleInfo = GtBundleParser::ParseHapProfile(TMP_RESOURCE_DIR, &bundleRes);
     if (bundleInfo == nullptr) {
-        return false;
+        return ERR_APPEXECFWK_INSTALL_FAILED_PARSE_PROFILE_ERROR;
     }
     if (bundleRes.abilityRes != nullptr) {
         AdapterFree(bundleRes.abilityRes);
@@ -228,10 +228,10 @@ bool GtBundleExtractor::ExtractInstallMsg(const char *path, char **bundleName, c
     *bigIconPath = Utils::Strdup(bundleInfo->bigIconPath);
     if (*bundleName == nullptr || *label == nullptr || *smallIconPath == nullptr || *bigIconPath == nullptr) {
         BundleInfoUtils::FreeBundleInfo(bundleInfo);
-        return false;
+        return ERR_APPEXECFWK_INSTALL_FAILED_PARSE_ABILITIES_ERROR;
     }
     BundleInfoUtils::FreeBundleInfo(bundleInfo);
-    return true;
+    return ERR_OK;
 }
 
 uint8_t GtBundleExtractor::ExtractBundleParam(const char *path, int32_t &fpStart, char **bundleName)

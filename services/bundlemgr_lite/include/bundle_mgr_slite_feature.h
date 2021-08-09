@@ -36,7 +36,7 @@ public:
     static uint8_t GetBundleInfo(const char *bundleName, int32_t flags, BundleInfo *bundleInfo);
     static uint8_t GetBundleInfos(int32_t flags, BundleInfo **bundleInfos, int32_t *len);
     static bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess);
-    static bool GetUninstallState(const char *bundleName, UninstallState *uninstallState);
+    static uint32_t GetBundleSize (const char *bundleName);
 
     static BundleMgrSliteFeature *GetInstance()
     {

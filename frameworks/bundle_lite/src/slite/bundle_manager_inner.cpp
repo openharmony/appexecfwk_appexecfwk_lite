@@ -24,8 +24,8 @@ bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t
     return OHOS::BundleMsClient::GetInstance().GetInstallState(bundleName, installState, installProcess);
 }
 
-bool GetUninstallState(const char *bundleName, UninstallState *uninstallState)
+uint32_t GetBundleSize(const char *bundleName)
 {
-    return OHOS::BundleMsClient::GetInstance().GetUninstallState(bundleName, uninstallState);
+    return OHOS::BundleMsClient::GetInstance().GetBundleSize(bundleName);
 }
 }

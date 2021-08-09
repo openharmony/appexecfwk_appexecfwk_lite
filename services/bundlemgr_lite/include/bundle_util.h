@@ -36,6 +36,8 @@ public:
     static bool StartWith(const char *str, const char *subStr);
     static cJSON *GetJsonStream(const char *path);
     static uint32_t GetFileSize(const char *filePath);
+    static uint32_t GetFileFolderSize(const char *filePath);
+    static uint32_t GetCurrentFolderSize(const char *dirPath, List<char *>* list);
     static cJSON *ConvertInstallRecordToJson(const InstallRecord &installRecord);
     static char *GetValueFromBundleJson(const char *bundleName, const char *key);
     static int32_t GetValueFromBundleJson(const char *bundleName, const char *key, int32_t defaultValue);

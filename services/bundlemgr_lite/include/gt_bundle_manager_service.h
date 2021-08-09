@@ -49,11 +49,6 @@ typedef enum {
     BUNDLE_UPDATE,
 } BundleState;
 
-typedef struct {
-    char *bundleName;
-    UninstallState uninstallState;
-} BundleUninstallMsg;
-
 class GtManagerService {
 public:
     static GtManagerService &GetInstance()
@@ -79,10 +74,10 @@ public:
     void ReduceNumOfThirdBundles();
     int32_t ReportInstallCallback(uint8_t errCode, uint8_t installState,
         uint8_t process, InstallerCallback installerCallback);
-    int32_t ReportUninstallCallback(uint8_t errCode, char *bundleName,
+    int32_t ReportUninstallCallback(uint8_t errCode, uint8_t installState, char *bundleName,
         uint8_t process, InstallerCallback installerCallback);
     bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess);
-    bool GetUninstallState(const char *bundleName, UninstallState *uninstallState);
+    uint32_t GetBundleSize(const char *bundleName);
 
 private:
     GtManagerService();
@@ -112,7 +107,6 @@ private:
     BundleMap *bundleMap_;
     List<BundleRes *> *bundleResList_;
     BundleInstallMsg *bundleInstallMsg_;
-    BundleUninstallMsg *bundleUninstallMsg_;
     char *jsEngineVer_;
     uint32_t installedThirdBundleNum_;
 };
