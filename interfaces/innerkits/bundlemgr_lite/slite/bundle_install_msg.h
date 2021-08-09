@@ -27,7 +27,10 @@ extern "C" {
 typedef enum {
     BUNDLE_INSTALL_DOING = 0,
     BUNDLE_INSTALL_OK = 1,
-    BUNDLE_INSTALL_FAIL = 2
+    BUNDLE_INSTALL_FAIL = 2,
+    BUNDLE_UNINSTALL_DOING = 3,
+    BUNDLE_UNINSTALL_OK = 4,
+    BUNDLE_UNINSTALL_FAIL = 5
 } InstallState;
 
 typedef struct {
@@ -38,12 +41,6 @@ typedef struct {
     InstallState installState;
     uint8_t installProcess;
 } BundleInstallMsg;
-
-typedef enum {
-    BUNDLE_UNINSTALL_DOING = 0,
-    BUNDLE_UNINSTALL_OK = 1,
-    BUNDLE_UNINSTALL_FAIL = 2
-} UninstallState;
 
 /**
  * @brief Get the install state and install process of the bundle.
@@ -59,14 +56,13 @@ typedef enum {
 bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess);
 
 /**
- * @brief Get the uninstall state and uninstall state of the bundle.
+ * @brief Get the bundle size.
  *
  * @param bundleName Indicates the name of the bundle.
- * @param uninstallState Obtains uninstall state.
- * @return Returns success or not.
+ * @return Returns bundle size or returns 0 if get bundle size failed.
  *
  */
-bool GetUninstallState(const char *bundleName, UninstallState *uninstallState);
+uint32_t GetBundleSize(const char *bundleName);
 
 #ifdef __cplusplus
 #if __cplusplus

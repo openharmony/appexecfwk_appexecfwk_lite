@@ -182,6 +182,80 @@ uint32_t BundleUtil::GetFileSize(const char *filePath)
     return fileInfo.st_size;
 }
 
+uint32_t BundleUtil::GetFileFolderSize(const char *filePath)
+{
+    if (!CheckRealPath(filePath)) {
+        return 0;
+    }
+    List<char *>* list = new (std::nothrow)List<char *>();
+    if (list == nullptr) {
+#ifdef APP_PLATFORM_WATCHGT
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] GetFolderSize failed, list is null");
+#endif
+        return 0;
+    }
+
+    list->PushFront(Utils::Strdup(filePath));
+    uint32_t fileFolderSize = 0;
+    while(!list->IsEmpty()) {
+        char *curPath = list->Front();
+        if (curPath == nullptr) {
+            break;
+        }
+        fileFolderSize += GetCurrentFolderSize(curPath, list);
+        list->PopFront();
+        AdapterFree(curPath);
+    }
+
+    if (!list->IsEmpty()) {
+#ifdef APP_PLATFORM_WATCHGT
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] After get folder size, list is still not empty");
+#endif
+        for (auto node = list->Begin(); node != list->End(); node = node->next_) {
+            AdapterFree(node->value_);
+        }
+    }
+    delete list;
+    return fileFolderSize;
+}
+
+uint32_t BundleUtil::GetCurrentFolderSize(const char *dirPath, List<char *>* list)
+{
+    DIR *dir = nullptr;
+    if ((dir = opendir(dirPath)) == nullptr) {
+        return 0;
+    }
+    dirent *dp = nullptr;
+    char filePath[PATH_LENGTH] = { 0 };
+    struct stat buf = { 0 };
+    uint32_t fileSize = 0;
+    while ((dp = readdir(dir)) != nullptr) {
+        if ((strcmp(dp->d_name, ".") == 0) || (strcmp(dp->d_name, "..")) == 0) {
+            continue;
+        }
+
+        if (memset_s(filePath, PATH_LENGTH, 0, PATH_LENGTH) != EOK) {
+            continue;
+        }
+
+        if (sprintf_s(filePath, PATH_LENGTH, "%s/%s", dirPath, dp->d_name) < 0) {
+            continue;
+        }
+
+        if (IsFile(filePath)) {
+            if (stat(filePath, &buf) != 0 || buf.st_size <= 0) {
+                fileSize = 0;
+                break;
+            }
+            fileSize += buf.st_size;
+        } else {
+            list->PushBack(Utils::Strdup(filePath));
+        }
+    }
+    closedir(dir);
+    return fileSize;
+}
+
 void BundleUtil::DeleteJsonFile(const char *bundleName, const char *randStr)
 {
     if (bundleName == nullptr || randStr == nullptr) {

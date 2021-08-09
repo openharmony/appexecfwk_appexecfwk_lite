@@ -49,7 +49,6 @@ GtManagerService::GtManagerService()
     bundleResList_ = new List<BundleRes *>();
     bundleMap_ = BundleMap::GetInstance();
     bundleInstallMsg_ = nullptr;
-    bundleUninstallMsg_ = nullptr;
     jsEngineVer_ = nullptr;
     installedThirdBundleNum_ = 0;
 }
@@ -95,20 +94,25 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
         return false;
     }
     // set bundleName、label、smallIconPath、bigIconPath in bundleInstallMsg_
-    bool isSuccess = GtBundleExtractor::ExtractInstallMsg(path, &(bundleInstallMsg_->bundleName),
+    uint8_t ret = GtBundleExtractor::ExtractInstallMsg(path, &(bundleInstallMsg_->bundleName),
         &(bundleInstallMsg_->label), &(bundleInstallMsg_->smallIconPath),
         &(bundleInstallMsg_->bigIconPath));
-    if (!isSuccess) {
+
+    if (ret != 0) {
+        char *name = strchr(path, '/');
+        bundleInstallMsg_->bundleName = Utils::Strdup(name + 1);
+        (void) ReportInstallCallback(ret, BUNDLE_INSTALL_FAIL, BMS_INSTALLATION_COMPLETED, installerCallback);
         // delete resource temp dir
         (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
         ClearSystemBundleInstallMsg();
+        AdapterFree(path);
         return false;
     }
 
     SetCurrentBundle(bundleInstallMsg_->bundleName);
     (void) ReportInstallCallback(OPERATION_DOING, 0, BMS_INSTALLATION_START, installerCallback);
     DisableServiceWdg();
-    uint8_t ret = installer_->Install(path, installerCallback);
+    ret = installer_->Install(path, installerCallback);
     EnableServiceWdg();
     if (ret == 0) {
         (void) ReportInstallCallback(ret, BUNDLE_INSTALL_OK, BMS_INSTALLATION_COMPLETED, installerCallback);
@@ -145,30 +149,19 @@ bool GtManagerService::Uninstall(const char *bundleName, const InstallParam *ins
     }
     SetCurrentBundle(innerBundleName);
 
-    bundleUninstallMsg_ = reinterpret_cast<BundleUninstallMsg *>(AdapterMalloc(sizeof(BundleUninstallMsg)));
-    if (bundleUninstallMsg_ == nullptr) {
-        return false;
-    }
-    if (memset_s(bundleUninstallMsg_, sizeof(BundleUninstallMsg), 0, sizeof(BundleUninstallMsg)) != EOK) {
-        AdapterFree(bundleUninstallMsg_);
-        return false;
-    }
-    bundleUninstallMsg_->bundleName = innerBundleName;
-    bundleUninstallMsg_->uninstallState = BUNDLE_UNINSTALL_DOING;
-
-    (void) ReportUninstallCallback(OPERATION_DOING, innerBundleName, BMS_UNINSTALLATION_START, installerCallback);
+    (void) ReportUninstallCallback(OPERATION_DOING, BUNDLE_UNINSTALL_DOING, innerBundleName,
+        BMS_UNINSTALLATION_START, installerCallback);
     uint8_t ret = installer_->Uninstall(innerBundleName);
     if (ret == 0) {
-        bundleUninstallMsg_->uninstallState = BUNDLE_UNINSTALL_OK;
+        (void) ReportUninstallCallback(ret, BUNDLE_UNINSTALL_OK, innerBundleName,
+            BMS_INSTALLATION_COMPLETED, installerCallback);
     } else {
-        bundleUninstallMsg_->uninstallState = BUNDLE_UNINSTALL_FAIL;
+        (void) ReportUninstallCallback(ret, BUNDLE_UNINSTALL_FAIL, innerBundleName,
+            BMS_INSTALLATION_COMPLETED, installerCallback);
     }
-    (void) ReportUninstallCallback(ret, innerBundleName, BMS_INSTALLATION_COMPLETED, installerCallback);
 
     SetCurrentBundle(nullptr);
     AdapterFree(innerBundleName);
-    AdapterFree(bundleUninstallMsg_);
-    bundleUninstallMsg_ = nullptr;
     return true;
 }
 
@@ -198,19 +191,25 @@ bool GtManagerService::GetInstallState(const char *bundleName, InstallState *ins
     return true;
 }
 
-bool GtManagerService::GetUninstallState(const char *bundleName, UninstallState *uninstallState)
+uint32_t GtManagerService::GetBundleSize(const char *bundleName)
 {
-    BundleInfo *uninstalledInfo = bundleMap_->Get(bundleName);
-    if (uninstalledInfo == nullptr) {
-        *uninstallState = BUNDLE_UNINSTALL_OK;
-        return true;
+    if (bundleName == nullptr) {
+        return 0;
     }
-    if (strcmp(bundleName, bundleUninstallMsg_->bundleName) == 0) {
-        *uninstallState = bundleUninstallMsg_->uninstallState;
-        return true;
+    BundleInfo *installedInfo = bundleMap_->Get(bundleName);
+    if (installedInfo == nullptr) {
+        HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] failed to get bundle size because the bundle does not exist!");
+        return 0;
     }
-    *uninstallState = BUNDLE_UNINSTALL_DOING;
-    return true;
+    char *codePath = installedInfo->codePath;
+    uint32_t codeBundleSize = BundleUtil::GetFileFolderSize(codePath);
+    if (codeBundleSize == 0) {
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] failed to get code bundle size!");
+        return 0;
+    }
+    char *dataPath = installedInfo->dataPath;
+    uint32_t dataBundleSize = BundleUtil::GetFileFolderSize(dataPath);
+    return codeBundleSize + dataBundleSize;
 }
 
 uint8_t GtManagerService::QueryAbilityInfo(const Want *want, AbilityInfo *abilityInfo)
@@ -290,10 +289,10 @@ void GtManagerService::InstallSystemBundle(const char *systemAppPath)
         return;
     }
     // set bundleName、label、smallIconPath、bigIconPath in bundleInstallMsg_
-    bool ret = GtBundleExtractor::ExtractInstallMsg(systemAppPath, &(bundleInstallMsg_->bundleName),
+    uint8_t ret = GtBundleExtractor::ExtractInstallMsg(systemAppPath, &(bundleInstallMsg_->bundleName),
         &(bundleInstallMsg_->label), &(bundleInstallMsg_->smallIconPath),
         &(bundleInstallMsg_->bigIconPath));
-    if (!ret) {
+    if (ret != 0) {
         // delete resource temp dir
         (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
         ClearSystemBundleInstallMsg();
@@ -883,19 +882,20 @@ int32_t GtManagerService::ReportInstallCallback(uint8_t errCode, uint8_t install
     return 0;
 }
 
-int32_t GtManagerService::ReportUninstallCallback(uint8_t errCode, char *bundleName,
+int32_t GtManagerService::ReportUninstallCallback(uint8_t errCode, uint8_t installState, char *bundleName,
     uint8_t process, InstallerCallback installerCallback)
 {
     if (installerCallback == nullptr) {
         return -1;
     }
-    BundleInstallMsg *bundleUninstallMsg = reinterpret_cast<BundleInstallMsg *>(AdapterMalloc(sizeof(BundleInstallMsg)));
-    if (bundleUninstallMsg == nullptr) {
+    BundleInstallMsg *bundleInstallMsg = reinterpret_cast<BundleInstallMsg *>(AdapterMalloc(sizeof(BundleInstallMsg)));
+    if (bundleInstallMsg == nullptr) {
         return -1;
     }
-    bundleUninstallMsg->bundleName = bundleName;
-    bundleUninstallMsg->installProcess = process;
-    (*installerCallback)(errCode, bundleUninstallMsg);
+    bundleInstallMsg->installState = static_cast<InstallState>(installState);
+    bundleInstallMsg->bundleName = bundleName;
+    bundleInstallMsg->installProcess = process;
+    (*installerCallback)(errCode, bundleInstallMsg);
     return 0;
 }
 
