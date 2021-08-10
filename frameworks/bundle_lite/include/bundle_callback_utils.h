@@ -67,4 +67,9 @@ struct BundleCallbackInfo {
     BundleStateCallback bundleStateCallback;
     void *data;
 };
+
+struct ResultOfGetBundleSize {
+    uint8_t resultCode;
+    uint32_t bundleSize;
+};
 #endif // OHOS_BUNDLE_CALLBACK_UTILS_H

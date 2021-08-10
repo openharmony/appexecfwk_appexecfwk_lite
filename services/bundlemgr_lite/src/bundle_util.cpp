@@ -242,7 +242,7 @@ uint32_t BundleUtil::GetCurrentFolderSize(const char *dirPath, List<char *>* lis
             continue;
         }
 
-        if (IsFile(filePath)) {
+        if (!IsDir(filePath)) {
             if (stat(filePath, &buf) != 0 || buf.st_size <= 0) {
                 fileSize = 0;
                 break;

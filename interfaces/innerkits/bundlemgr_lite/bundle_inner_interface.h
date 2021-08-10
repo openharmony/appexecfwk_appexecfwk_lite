@@ -40,6 +40,7 @@ enum BmsCmd {
     QUERY_KEEPALIVE_BUNDLE_INFOS,
     GET_BUNDLE_INFOS_BY_METADATA,
     CHECK_SYS_CAP,
+    GET_BUNDLE_SIZE,
     GET_SYS_CAP,
     BMS_INNER_BEGIN,
     INSTALL = BMS_INNER_BEGIN, // bms install application
@@ -59,6 +60,7 @@ struct BmsServerProxy {
     uint8_t (*GetBundleInfos)(int flags, BundleInfo **bundleInfos, int32_t *len);
     uint8_t (*QueryKeepAliveBundleInfos)(BundleInfo **bundleInfos, int32_t *len);
     uint8_t (*GetBundleNameForUid)(int32_t uid,  char **bundleName);
+    uint32_t (*GetBundleSize)(const char *bundleName);
 };
 
 struct BmsInnerServerProxy {
