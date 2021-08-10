@@ -44,6 +44,7 @@ public:
     static uint8_t QueryKeepAliveBundleInfos(BundleInfo **bundleInfos, int32_t *len);
     static uint8_t GetBundleInfosByMetaData(const char *metaDataKey, BundleInfo **bundleInfos, int32_t *len);
     static uint8_t GetBundleNameForUid(int32_t uid, char **bundleName);
+    static uint32_t GetBundleSize(const char *bundleName);
 
 private:
     BundleMsFeature();
@@ -60,6 +61,7 @@ private:
     static uint8_t ChangeInnerCallbackServiceId(const uint8_t funcId, IpcIo *req, IpcIo *reply);
     static uint8_t HasSystemCapability(const uint8_t funcId, IpcIo *req, IpcIo *reply);
     static uint8_t GetSystemAvailableCapabilities(const uint8_t funcId, IpcIo *req, IpcIo *reply);
+    static uint8_t GetInnerBundleSize(const uint8_t funcId, IpcIo *req, IpcIo *reply);
 
     Identity identity_;
     static BundleInvokeType BundleMsInvokeFuc[BMS_INNER_BEGIN];

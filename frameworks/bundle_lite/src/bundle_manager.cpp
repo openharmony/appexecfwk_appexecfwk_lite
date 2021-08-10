@@ -224,6 +224,22 @@ static uint8_t DeserializeInnerBundleName(IOwner owner, IpcIo *reply)
     return resultCode;
 }
 
+static uint8_t DeserializeBundleSize(IOwner owner, IpcIo *reply)
+{
+    if ((reply == nullptr) || (owner == nullptr)) {
+        return OHOS_FAILURE;
+    }
+    uint8_t resultCode = IpcIoPopUint8(reply);
+    ResultOfGetBundleSize *info = reinterpret_cast<ResultOfGetBundleSize *>(owner);
+    if (resultCode != ERR_OK) {
+        info->resultCode = resultCode;
+        return resultCode;
+    }
+    info->bundleSize = IpcIoPopUint32(reply);
+    info->resultCode = resultCode;
+    return resultCode;
+}
+
 static uint8_t DeserializeSystemCapabilities(IOwner owner, IpcIo *reply)
 {
     if ((reply == nullptr) || (owner == nullptr)) {
@@ -299,6 +315,9 @@ static int Notify(IOwner owner, int code, IpcIo *reply)
             *ret = IpcIoPopUint8(reply);
             HILOG_INFO(HILOG_MODULE_APP, "BundleManager HasSystemCapability invoke return: %{public}d", *ret);
             break;
+        }
+        case GET_BUNDLE_SIZE: {
+            return DeserializeBundleSize(owner, reply);
         }
         case GET_SYS_CAP: {
             return DeserializeSystemCapabilities(owner, reply);
@@ -603,6 +622,43 @@ uint8_t GetBundleInfos(const int flags, BundleInfo **bundleInfos, int32_t *len)
     IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, 0);
     IpcIoPushInt32(&ipcIo, flags);
     return ObtainInnerBundleInfos(flags, bundleInfos, len, GET_BUNDLE_INFOS, &ipcIo);
+}
+
+uint32_t GetBundleSize(const char *bundleName)
+{
+    if (bundleName == nullptr) {
+        return 0;
+    }
+    if (strlen(bundleName) >= MAX_BUNDLE_NAME) {
+        return 0;
+    }
+    if (CheckSelfPermission(static_cast<const char *>(PERMISSION_GET_BUNDLE_INFO)) != GRANTED) {
+        HILOG_ERROR(HILOG_MODULE_APP, "BundleManager get bundle size failed due to permission denied");
+        return 0;
+    }
+    auto bmsClient = GetBmsClient();
+    if (bmsClient == nullptr) {
+        HILOG_ERROR(HILOG_MODULE_APP, "BundleManager get bundle size failed due to nullptr bms client");
+        return 0;
+    }
+
+    IpcIo ipcIo;
+    char data[IPC_IO_DATA_MAX];
+    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, 0);
+    IpcIoPushString(&ipcIo, bundleName);
+    if (!IpcIoAvailable(&ipcIo)) {
+        HILOG_ERROR(HILOG_MODULE_APP, "BundleManager GetBundleSize ipc failed");
+        return 0;
+    }
+
+    ResultOfGetBundleSize resultOfGetBundleSize;
+    int32_t ret = bmsClient->Invoke(bmsClient, GET_BUNDLE_SIZE, &ipcIo, &resultOfGetBundleSize, Notify);
+    if (ret != OHOS_SUCCESS) {
+        HILOG_ERROR(HILOG_MODULE_APP, "BundleManager GetBundleSize invoke failed: %{public}d", ret);
+        return 0;
+    }
+    uint32_t bundleSize = resultOfGetBundleSize.bundleSize;
+    return bundleSize;
 }
 
 uint8_t QueryKeepAliveBundleInfos(BundleInfo **bundleInfos, int32_t *len)

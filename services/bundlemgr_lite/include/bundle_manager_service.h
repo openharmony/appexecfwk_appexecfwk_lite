@@ -44,6 +44,7 @@ public:
     bool UpdateBundleInfo(BundleInfo *info);
     uint8_t GetBundleInfo(const char *bundleName, int32_t flags, BundleInfo& bundleInfo);
     uint8_t GetBundleInfos(int32_t flags, BundleInfo **bundleInfos, int32_t *len);
+    uint32_t GetBundleSize(const char *bundleName);
     std::vector<SvcIdentity> GetServiceId() const;
     int32_t GenerateUid(const char *bundleName, int8_t bundleStyle);
     void RecycleUid(const char *bundleName);

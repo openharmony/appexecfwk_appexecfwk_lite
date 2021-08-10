@@ -42,6 +42,7 @@ static BmsImpl g_bmsImpl = {
     .GetBundleInfos = BundleMsFeature::GetBundleInfos,
     .QueryKeepAliveBundleInfos = BundleMsFeature::QueryKeepAliveBundleInfos,
     .GetBundleNameForUid = BundleMsFeature::GetBundleNameForUid,
+    .GetBundleSize = BundleMsFeature::GetBundleSize,
     IPROXY_END
 };
 
@@ -54,6 +55,7 @@ BundleInvokeType BundleMsFeature::BundleMsInvokeFuc[BMS_INNER_BEGIN] {
     HandleGetBundleInfos,
     HandleGetBundleInfos,
     HasSystemCapability,
+    GetInnerBundleSize,
     GetSystemAvailableCapabilities,
 };
 
@@ -248,6 +250,25 @@ uint8_t BundleMsFeature::GetInnerBundleInfo(const uint8_t funcId, IpcIo *req, Ip
     return OHOS_SUCCESS;
 }
 
+uint8_t BundleMsFeature::GetInnerBundleSize(const uint8_t funcId, IpcIo *req, IpcIo *reply)
+{
+    if ((req == nullptr) || (reply == nullptr)) {
+        return ERR_APPEXECFWK_OBJECT_NULL;
+    }
+    size_t size = 0;
+    char *bundleName = reinterpret_cast<char *>(IpcIoPopString(req, &size));
+    if (bundleName == nullptr) {
+        return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
+    }
+    uint32_t bundleSize = GetBundleSize(bundleName);
+    if (bundleSize == 0) {
+        return ERR_APPEXECFWK_OBJECT_NULL;
+    }
+    IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
+    IpcIoPushUint32(reply, bundleSize);
+    return OHOS_SUCCESS;
+}
+
 uint8_t BundleMsFeature::HandleGetBundleInfos(const uint8_t funcId, IpcIo *req, IpcIo *reply)
 {
     if ((req == nullptr) || (reply == nullptr)) {
@@ -425,6 +446,11 @@ uint8_t BundleMsFeature::GetBundleInfo(const char *bundleName, int32_t flags, Bu
 uint8_t BundleMsFeature::GetBundleInfos(const int flags, BundleInfo **bundleInfos, int32_t *len)
 {
     return OHOS::ManagerService::GetInstance().GetBundleInfos(flags, bundleInfos, len);
+}
+
+uint32_t BundleMsFeature::GetBundleSize(const char *bundleName)
+{
+    return OHOS::ManagerService::GetInstance().GetBundleSize(bundleName);
 }
 
 uint8_t BundleMsFeature::QueryKeepAliveBundleInfos(BundleInfo **bundleInfos, int32_t *len)

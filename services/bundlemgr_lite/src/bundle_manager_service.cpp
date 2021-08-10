@@ -625,6 +625,25 @@ uint8_t ManagerService::GetBundleInfos(int32_t flags, BundleInfo **bundleInfos, 
     return bundleMap_->GetBundleInfos(flags, bundleInfos, len);
 }
 
+uint32_t ManagerService::GetBundleSize(const char *bundleName)
+{
+    if (bundleName == nullptr) {
+        return 0;
+    }
+    BundleInfo *installedInfo = bundleMap_->Get(bundleName);
+    if (installedInfo == nullptr) {
+        return 0;
+    }
+    char *codePath = installedInfo->codePath;
+    uint32_t codeBundleSize = BundleUtil::GetFileFolderSize(codePath);
+    if (codeBundleSize == 0) {
+        return 0;
+    }
+    char *dataPath = installedInfo->dataPath;
+    uint32_t dataBundleSize = BundleUtil::GetFileFolderSize(dataPath);
+    HILOG_INFO(HILOG_MODULE_APP, "bundle size is %{public}d\n", codeBundleSize + dataBundleSize);
+    return codeBundleSize + dataBundleSize;
+}
 
 std::string ManagerService::GetCodeDirPath() const
 {

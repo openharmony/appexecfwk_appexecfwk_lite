@@ -246,6 +246,17 @@ SystemCapability *GetSystemAvailableCapabilities();
  * @version 4
  */
 void FreeSystemAvailableCapabilitiesInfo(SystemCapability *sysCap);
+
+/**
+ * @brief Get bundle size
+ *
+ * @param bundleName Indicates the bundle name.
+ * @return Returns the bundle size if this function is successfully called; returns 0 otherwise.
+ *
+ * @since 7
+ * @version 7
+ */
+uint32_t GetBundleSize(const char *bundleName);
 #ifdef __cplusplus
 #if __cplusplus
 }
