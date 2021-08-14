@@ -28,4 +28,9 @@ uint32_t GetBundleSize(const char *bundleName)
 {
     return OHOS::BundleMsClient::GetInstance().GetBundleSize(bundleName);
 }
+
+bool RegisterInstallerCallback(InstallerCallback installerCallback)
+{
+    return OHOS::BundleMsClient::GetInstance().RegisterInstallerCallback(installerCallback);
+}
 }
