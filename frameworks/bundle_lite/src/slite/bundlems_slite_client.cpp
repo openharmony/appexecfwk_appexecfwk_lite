@@ -126,6 +126,29 @@ bool BundleMsClient::Uninstall (const char *bundleName, const InstallParam *inst
     return ret == ERR_OK;
 }
 
+bool BundleMsClient::RegisterInstallerCallback (InstallerCallback installerCallback) const
+{
+    BundleMgrService *service = BundleMgrService::GetInstance();
+    if (service == nullptr) {
+        return false;
+    }
+    if (installerCallback == nullptr) {
+        return false;
+    }
+    if (g_bmsbuff == nullptr) {
+        g_bmsbuff = reinterpret_cast<Bmsbuff *>(OhosMalloc(MEM_TYPE_APPFMK_LSRAM, sizeof(Bmsbuff)));
+    }
+    g_bmsbuff->bundleInstallerCallback = installerCallback;
+    Request request = {
+        .msgId = BMS_REGISTER_CALLBACK_MSG,
+        .data = nullptr,
+        .len = 0,
+        .msgValue = 0,
+    };
+    int32_t ret = SAMGR_SendRequest(service->GetIdentity(), &request, nullptr);
+    return ret == ERR_OK;
+}
+
 uint8_t BundleMsClient::QueryAbilityInfo (const Want *want, AbilityInfo *abilityInfo) const
 {
     if (!Initialize()) {

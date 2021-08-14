@@ -18,6 +18,8 @@
 
 #include <stdint.h>
 
+#include "bundle_manager.h"
+
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
@@ -63,6 +65,15 @@ bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t
  *
  */
 uint32_t GetBundleSize(const char *bundleName);
+
+/**
+ * @brief Register installer callback.
+ *
+ * @param installerCallback Indicates the installer callback.
+ * @return Returns success or failure.
+ *
+ */
+bool RegisterInstallerCallback(InstallerCallback installerCallback);
 
 #ifdef __cplusplus
 #if __cplusplus

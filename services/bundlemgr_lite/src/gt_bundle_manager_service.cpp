@@ -37,7 +37,6 @@
 #include "want.h"
 
 namespace OHOS {
-const uint8_t PAIR_VALUE = 2;
 const uint8_t OPERATION_DOING = 200;
 const uint8_t BMS_INSTALLATION_START = 101;
 const uint8_t BMS_UNINSTALLATION_START = 104;
@@ -102,9 +101,8 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
         char *name = strchr(path, '/');
         bundleInstallMsg_->bundleName = Utils::Strdup(name + 1);
         (void) ReportInstallCallback(ret, BUNDLE_INSTALL_FAIL, BMS_INSTALLATION_COMPLETED, installerCallback);
-        // delete resource temp dir
-        (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
         ClearSystemBundleInstallMsg();
+        (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
         AdapterFree(path);
         return false;
     }
@@ -119,9 +117,9 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
     } else {
         (void) ReportInstallCallback(ret, BUNDLE_INSTALL_FAIL, BMS_INSTALLATION_COMPLETED, installerCallback);
     }
-    (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
     SetCurrentBundle(nullptr);
     ClearSystemBundleInstallMsg();
+    (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
     AdapterFree(path);
     return true;
 }
@@ -247,7 +245,39 @@ uint8_t GtManagerService::GetBundleInfos(const int flags, BundleInfo **bundleInf
     return bundleMap_->GetBundleInfos(flags, bundleInfos, len);
 }
 
-void GtManagerService::InstallAllSystemBundle()
+bool GtManagerService::RegisterInstallerCallback(InstallerCallback installerCallback)
+{
+    if (installerCallback == nullptr) {
+        return false;
+    }
+    InstallPreBundle(systemPathList_, installerCallback);
+    return true;
+}
+
+void GtManagerService::InstallPreBundle(List<ToBeInstalledApp *> systemPathList, InstallerCallback installerCallback)
+{
+    if (!BundleUtil::IsDir(JSON_PATH_NO_SLASH_END)) {
+        BundleUtil::MkDirs(JSON_PATH_NO_SLASH_END);
+        InstallAllSystemBundle(installerCallback);
+        RemoveSystemAppPathList(&systemPathList);
+        return;
+    }
+    for (auto node = systemPathList.Begin(); node != systemPathList.End(); node = node->next_) {
+        ToBeInstalledApp *toBeInstalledApp = node->value_;
+        if (toBeInstalledApp->isUpdated) {
+            (void) ReloadBundleInfo(toBeInstalledApp->installedPath, toBeInstalledApp->appId,
+                toBeInstalledApp->isSystemApp);
+        }
+        if (!BundleUtil::IsFile(toBeInstalledApp->path) ||
+            !BundleUtil::EndWith(toBeInstalledApp->path, INSTALL_FILE_SUFFIX)) {
+            return;
+        }
+        (void) Install(toBeInstalledApp->path, nullptr, installerCallback);
+    }
+    RemoveSystemAppPathList(&systemPathList);
+}
+
+void GtManagerService::InstallAllSystemBundle(InstallerCallback installerCallback)
 {
     AppInfoList *list = GtManagerService::APP_InitAllAppInfo();
     if (list == nullptr) {
@@ -262,52 +292,14 @@ void GtManagerService::InstallAllSystemBundle()
             (strcmp(((AppInfoList *)currentNode)->filePath, "..") == 0)) {
             continue;
         }
-        InstallSystemBundle(((AppInfoList *)currentNode)->filePath);
+
+        if (!BundleUtil::IsFile(((AppInfoList *)currentNode)->filePath) ||
+            !BundleUtil::EndWith(((AppInfoList *)currentNode)->filePath, INSTALL_FILE_SUFFIX)) {
+            return;
+        }
+        (void) Install(((AppInfoList *)currentNode)->filePath, nullptr, installerCallback);
     }
     GtManagerService::APP_FreeAllAppInfo(list);
-}
-
-void GtManagerService::InstallSystemBundle(const char *systemAppPath)
-{
-    if (installer_ == nullptr) {
-        return;
-    }
-
-    if (!BundleUtil::IsFile(systemAppPath) || !BundleUtil::EndWith(systemAppPath, INSTALL_FILE_SUFFIX)) {
-        return;
-    }
-
-    // delete resource temp dir first
-    (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
-    // create new bundleInstallMsg
-    bundleInstallMsg_ = reinterpret_cast<BundleInstallMsg *>(AdapterMalloc(sizeof(BundleInstallMsg)));
-    if (bundleInstallMsg_ == nullptr) {
-        return;
-    }
-    if (memset_s(bundleInstallMsg_, sizeof(BundleInstallMsg), 0, sizeof(BundleInstallMsg)) != EOK) {
-        AdapterFree(bundleInstallMsg_);
-        return;
-    }
-    // set bundleName、label、smallIconPath、bigIconPath in bundleInstallMsg_
-    uint8_t ret = GtBundleExtractor::ExtractInstallMsg(systemAppPath, &(bundleInstallMsg_->bundleName),
-        &(bundleInstallMsg_->label), &(bundleInstallMsg_->smallIconPath),
-        &(bundleInstallMsg_->bigIconPath));
-    if (ret != 0) {
-        // delete resource temp dir
-        (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
-        ClearSystemBundleInstallMsg();
-        return;
-    }
-
-    InstallerCallback installerCallback = nullptr;
-    DisableServiceWdg();
-    uint8_t result = installer_->Install(systemAppPath, installerCallback);
-    EnableServiceWdg();
-    SetCurrentBundle(nullptr);
-    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] install system result is %d", result);
-    // delete resource temp dir
-    ClearSystemBundleInstallMsg();
-    (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
 }
 
 void GtManagerService::ClearSystemBundleInstallMsg()
@@ -348,11 +340,6 @@ void GtManagerService::ScanPackages()
     if (jsEngineVer_ == nullptr) {
         HILOG_WARN(HILOG_MODULE_AAFWK, "[BMS] get jsEngine version fail when restart!");
     }
-    if (!BundleUtil::IsDir(JSON_PATH_NO_SLASH_END)) {
-        BundleUtil::MkDirs(JSON_PATH_NO_SLASH_END);
-        InstallAllSystemBundle();
-        return;
-    }
 
     // get third system bundle uninstall record
     cJSON *uninstallRecord = BundleUtil::GetJsonStream(UNINSTALL_THIRD_SYSTEM_BUNDLE_JSON);
@@ -360,24 +347,14 @@ void GtManagerService::ScanPackages()
         (void) unlink(UNINSTALL_THIRD_SYSTEM_BUNDLE_JSON);
     }
 
-    List<ToBeInstalledApp *> systemPathList;
     // scan system apps and third system apps
-    ScanSystemApp(uninstallRecord, &systemPathList);
+    ScanSystemApp(uninstallRecord, &systemPathList_);
     if (uninstallRecord != nullptr) {
         cJSON_Delete(uninstallRecord);
     }
+
     // scan third apps
-    ScanThirdApp(INSTALL_PATH, &systemPathList);
-    // install new system app or app which is to be updated
-    for (auto node = systemPathList.Begin(); node != systemPathList.End(); node = node->next_) {
-        ToBeInstalledApp *toBeInstalledApp = node->value_;
-        if (toBeInstalledApp->isUpdated) {
-            (void) ReloadBundleInfo(toBeInstalledApp->installedPath, toBeInstalledApp->appId,
-                toBeInstalledApp->isSystemApp);
-        }
-        InstallSystemBundle(toBeInstalledApp->path);
-    }
-    RemoveSystemAppPathList(&systemPathList);
+    ScanThirdApp(INSTALL_PATH, &systemPathList_);
 }
 
 void GtManagerService::RemoveSystemAppPathList(List<ToBeInstalledApp *> *systemPathList)
@@ -893,7 +870,7 @@ int32_t GtManagerService::ReportUninstallCallback(uint8_t errCode, uint8_t insta
         return -1;
     }
     bundleInstallMsg->installState = static_cast<InstallState>(installState);
-    bundleInstallMsg->bundleName = bundleName;
+    bundleInstallMsg->bundleName = Utils::Strdup(bundleName);
     bundleInstallMsg->installProcess = process;
     (*installerCallback)(errCode, bundleInstallMsg);
     return 0;
