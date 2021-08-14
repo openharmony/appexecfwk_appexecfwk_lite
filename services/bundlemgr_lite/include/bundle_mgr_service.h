@@ -24,6 +24,7 @@ namespace OHOS {
 const unsigned int BMS_INSTALL_MSG = 100;
 const unsigned int BMS_UNINSTALL_MSG = 101;
 const unsigned int BMS_SCAN_PACKAGE_MSG = 102;
+const unsigned int BMS_REGISTER_CALLBACK_MSG = 103;
 
 class BundleMgrService : public Service {
 public:

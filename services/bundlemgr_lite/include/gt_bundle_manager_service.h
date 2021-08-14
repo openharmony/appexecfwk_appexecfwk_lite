@@ -78,14 +78,14 @@ public:
         uint8_t process, InstallerCallback installerCallback);
     bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess);
     uint32_t GetBundleSize(const char *bundleName);
+    bool RegisterInstallerCallback(InstallerCallback installerCallback);
 
 private:
     GtManagerService();
     ~GtManagerService();
     void ScanSystemApp(const cJSON *uninstallRecord, List<ToBeInstalledApp *> *systemPathList);
     void ScanThirdApp(const char *appDir, const List<ToBeInstalledApp *> *systemPathList);
-    void InstallAllSystemBundle();
-    void InstallSystemBundle(const char *systemAppPath);
+    void InstallAllSystemBundle(InstallerCallback installerCallback);
     bool ReloadBundleInfo(const char *profileDir, const char *appId, bool isSystemApp);
     void ReloadEntireBundleInfo(const char *appPath, const char *bundleName, List<ToBeInstalledApp *> *systemPathList,
         int32_t versionCode, uint8_t scanFlag);
@@ -102,6 +102,7 @@ private:
     void APP_QueryAppInfo(const char *appDir, AppInfoList *list);
     void APP_InsertAppInfo(char *filePath, AppInfoList *list);
     void APP_FreeAllAppInfo(const AppInfoList *list);
+    void InstallPreBundle(List<ToBeInstalledApp *> systemPathList, InstallerCallback installerCallback);
 
     GtBundleInstaller *installer_;
     BundleMap *bundleMap_;
@@ -109,6 +110,7 @@ private:
     BundleInstallMsg *bundleInstallMsg_;
     char *jsEngineVer_;
     uint32_t installedThirdBundleNum_;
+    List<ToBeInstalledApp *> systemPathList_;
 };
 }
 
