@@ -49,6 +49,8 @@ public:
 
     uint32_t GetBundleSize(const char *bundleName) const;
 
+    bool RegisterInstallerCallback(InstallerCallback installerCallback) const;
+
 private:
     BundleMsClient() = default;
 
