@@ -38,6 +38,7 @@ executable("bm") {
   deps = [
     "${appexecfwk_lite_path}/frameworks/bundle_lite:bundle",
     "//base/hiviewdfx/hilog_lite/frameworks/featured:hilog_shared",
+    "//base/startup/syspara_lite/frameworks/parameter:parameter",
     "//base/security/permission/services/permission_lite/pms_client:pms_client",
     "//build/lite/config/component/cJSON:cjson_shared",
     "//foundation/communication/ipc_lite:liteipc_adapter",
@@ -48,6 +49,7 @@ executable("bm") {
     "include",
     "//base/security/permission/services/permission_lite/pms_client/include",
     "//base/security/permission/interfaces/innerkits/permission_lite",
+    "//base/startup/syspara_lite/interfaces/kits",
     "${aafwk_lite_path}/interfaces/innerkits/abilitymgr_lite",
     "${aafwk_lite_path}/interfaces/kits/want_lite",
     "${aafwk_lite_path}/services/abilitymgr_lite/include",
