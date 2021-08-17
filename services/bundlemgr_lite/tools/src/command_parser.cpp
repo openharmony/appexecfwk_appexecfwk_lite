@@ -30,7 +30,7 @@
 #include "convert_utils.h"
 #include "iproxy_client.h"
 #include "liteipc_adapter.h"
-#include "pms_interface_inner.h"
+#include "parameter.h"
 #include "samgr_lite.h"
 #include "securec.h"
 
@@ -275,14 +275,15 @@ void CommandParser::RunAsGetUdidCommand(int32_t argc, char *argv[]) const
         return;
     }
 
-    unsigned char udid[UDID_STRING_LEN + 1] = {0};
+    char udid[UDID_STRING_LEN + 1] = {0};
     if (memset_s(udid, sizeof(udid), 0, sizeof(udid)) != EOK) {
         printf("GetUdid error memset\n");
         return;
     }
-    int ret = RequestDevUdid(udid, sizeof(udid));
+    char *devUdid = udid;
+    int ret = GetDevUdid(devUdid, sizeof(udid));
     if (ret == EOK) {
-        cout << udid << endl;
+        cout << devUdid << endl;
     } else {
         cout << "Get Udid error ret = " << ret << endl;
     }
