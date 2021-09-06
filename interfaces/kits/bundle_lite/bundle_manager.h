@@ -251,7 +251,7 @@ void FreeSystemAvailableCapabilitiesInfo(SystemCapability *sysCap);
  * @brief Get bundle size
  *
  * @param bundleName Indicates the bundle name.
- * @return Returns the bundle size if this function is successfully called; returns 0 otherwise.
+ * @return Returns the bundle size (Byte) if this function is successfully called; returns 0 otherwise.
  *
  * @since 7
  * @version 7
