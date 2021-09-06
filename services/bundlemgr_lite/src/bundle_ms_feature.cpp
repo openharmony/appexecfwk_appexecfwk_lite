@@ -256,14 +256,14 @@ uint8_t BundleMsFeature::GetInnerBundleSize(const uint8_t funcId, IpcIo *req, Ip
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
     size_t size = 0;
+    uint32_t bundleSize = 0;
     char *bundleName = reinterpret_cast<char *>(IpcIoPopString(req, &size));
     if (bundleName == nullptr) {
-        return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
+        IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
+        IpcIoPushUint32(reply, bundleSize);
+        return OHOS_SUCCESS;
     }
-    uint32_t bundleSize = GetBundleSize(bundleName);
-    if (bundleSize == 0) {
-        return ERR_APPEXECFWK_OBJECT_NULL;
-    }
+    bundleSize = GetBundleSize(bundleName);
     IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
     IpcIoPushUint32(reply, bundleSize);
     return OHOS_SUCCESS;
