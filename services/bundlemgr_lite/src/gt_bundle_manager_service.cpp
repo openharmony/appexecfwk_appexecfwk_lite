@@ -732,7 +732,9 @@ void GtManagerService::TransformJsToBc(const char *codePath, const char *bundleJ
         return;
     }
 
+    DisableServiceWdg();
     EXECRES result = walk_directory(jsPath);
+    EnableServiceWdg();
     HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] transform js to bc, result is %d", result);
     if (result != EXCE_ACE_JERRY_EXEC_OK) {
         result = walk_del_bytecode(jsPath);
@@ -760,7 +762,7 @@ void GtManagerService::TransformJsToBc(const char *codePath, const char *bundleJ
             return;
         }
     }
-    (void) BundleUtil::StoreJsonContentToFile(bundleJsonPath, installRecordObj);
+    (void)BundleUtil::StoreJsonContentToFile(bundleJsonPath, installRecordObj);
 }
 
 bool GtManagerService::CheckThirdSystemBundleHasUninstalled(const char *bundleName, const cJSON *object)
@@ -975,7 +977,7 @@ void GtManagerService::APP_FreeAllAppInfo(const AppInfoList *list)
 
     AppInfoList *currentNode = nullptr;
     AppInfoList *nextNode = nullptr;
-    LOS_DL_LIST_FOR_EACH_ENTRY_SAFE (currentNode, nextNode, &list->appDoubleList, AppInfoList, appDoubleList) {
+    LOS_DL_LIST_FOR_EACH_ENTRY_SAFE(currentNode, nextNode, &list->appDoubleList, AppInfoList, appDoubleList) {
         if (currentNode != nullptr) {
             LOS_ListDelete(&(currentNode->appDoubleList));
             AdapterFree(currentNode);
@@ -1004,7 +1006,7 @@ void SetCurrentBundle(const char *name)
     }
 
     int len = strlen(name);
-    g_currentBundle = (char *) AdapterMalloc(len + 1);
+    g_currentBundle = (char *)AdapterMalloc(len + 1);
     if (g_currentBundle == nullptr || strncpy_s(g_currentBundle, len + 1, name, len) < 0) {
         AdapterFree(g_currentBundle);
     }
@@ -1020,7 +1022,7 @@ const char *GetCurrentBundle()
     }
 
     int len = strlen(g_currentBundle);
-    char *bundleName = (char *) AdapterMalloc(len + 1);
+    char *bundleName = (char *)AdapterMalloc(len + 1);
     if (bundleName == nullptr || strncpy_s(bundleName, len + 1, g_currentBundle, len) < 0) {
         AdapterFree(bundleName);
         MutexRelease(&g_currentBundleMutex);
