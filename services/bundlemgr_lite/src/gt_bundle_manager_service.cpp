@@ -174,7 +174,7 @@ bool GtManagerService::GetInstallState(const char *bundleName, InstallState *ins
         *installProcess = BMS_INSTALLATION_COMPLETED;
         return true;
     }
-    if (bundleInstallMsg_ == nullptr) {
+    if (bundleInstallMsg_ == nullptr || bundleInstallMsg_->bundleName == nullptr) {
         *installState = BUNDLE_INSTALL_FAIL;
         *installProcess = 0;
         return true;
