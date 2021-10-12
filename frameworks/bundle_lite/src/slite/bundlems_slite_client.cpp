@@ -188,4 +188,12 @@ uint32_t BundleMsClient::GetBundleSize (const char *bundleName) const
     }
     return bmsProxy_->GetBundleSize(bundleName);
 }
+
+void BundleMsClient::UpdateBundleInfoList () const
+{
+    if (!Initialize()) {
+        return;
+    }
+    bmsProxy_->UpdateBundleInfoList();
+}
 } //  namespace OHOS
