@@ -69,6 +69,7 @@ public:
     uint32_t GetNumOfThirdBundles();
     void RemoveBundleResList(const char *bundleName);
     void AddBundleResList(const BundleRes *bundleRes);
+    void UpdateBundleInfoList();
     void ReportInstallProcess(const char *bundleName, uint8_t bundleStyle, uint8_t process);
     void AddNumOfThirdBundles();
     void ReduceNumOfThirdBundles();

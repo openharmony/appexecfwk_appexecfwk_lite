@@ -172,7 +172,7 @@ const uint8_t LONG_LENGTH = 8;
 const uint16_t MAX_INT = 256;
 const uint8_t MAX_VERSION_NAME_LEN = 20;
 const uint8_t MAX_LABLE_LEN = 30;
-const uint8_t MAX_THIRD_BUNDLE_NUMBER = 30;
+const uint8_t MAX_THIRD_BUNDLE_NUMBER = 50;
 
 struct SignatureInfo {
     char *bundleName;

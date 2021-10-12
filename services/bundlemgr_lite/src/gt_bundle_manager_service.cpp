@@ -659,6 +659,46 @@ void GtManagerService::RemoveBundleResList(const char *bundleName)
     }
 }
 
+void GtManagerService::UpdateBundleInfoList()
+{
+    if (bundleResList_ == nullptr) {
+        return;
+    }
+
+    for (auto node = bundleResList_->Begin(); node != bundleResList_->End(); node = node->next_) {
+        BundleRes *res = node->value_;
+        if (res == nullptr || res->bundleName == nullptr || res->abilityRes == nullptr) {
+            continue;
+        }
+
+        BundleInfo *bundleInfo = bundleMap_->Get(res->bundleName);
+        if (bundleInfo == nullptr) {
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] get no bundleInfo when change bundle res!");
+            continue;
+        }
+
+        int32_t len = strlen(INSTALL_PATH) + 1 + strlen(res->bundleName);
+        char *path = reinterpret_cast<char *>(UI_Malloc(len + 1));
+        if (path == nullptr) {
+            continue;
+        }
+
+        if (sprintf_s(path, len + 1, "%s/%s", INSTALL_PATH, res->bundleName) < 0) {
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] change bundle res failed! because sprintf_s fail");
+            UI_Free(path);
+            continue;
+        }
+
+        uint8_t errorCode = GtBundleParser::ConvertResInfoToBundleInfo(path, res->abilityRes->labelId,
+            res->abilityRes->iconId, bundleInfo);
+        UI_Free(path);
+        if (errorCode != ERR_OK) {
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] change bundle res failed! errorCode is %d", errorCode);
+            return;
+        }
+    }
+}
+
 void GtManagerService::TransformJsToBcWhenRestart(const char *codePath, const char *bundleName)
 {
     if (codePath == nullptr) {
@@ -872,7 +912,7 @@ int32_t GtManagerService::ReportUninstallCallback(uint8_t errCode, uint8_t insta
         return -1;
     }
     bundleInstallMsg->installState = static_cast<InstallState>(installState);
-    bundleInstallMsg->bundleName = Utils::Strdup(bundleName);
+    bundleInstallMsg->bundleName = bundleName;
     bundleInstallMsg->installProcess = process;
     (*installerCallback)(errCode, bundleInstallMsg);
     return 0;

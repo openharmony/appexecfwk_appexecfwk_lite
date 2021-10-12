@@ -33,4 +33,9 @@ bool RegisterInstallerCallback(InstallerCallback installerCallback)
 {
     return OHOS::BundleMsClient::GetInstance().RegisterInstallerCallback(installerCallback);
 }
+
+void UpdateBundleInfoList(void)
+{
+    OHOS::BundleMsClient::GetInstance().UpdateBundleInfoList();
+}
 }

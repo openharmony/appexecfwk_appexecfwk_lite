@@ -38,6 +38,7 @@ public:
     static bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess);
     static uint32_t GetBundleSize (const char *bundleName);
     static bool RegisterInstallerCallback(InstallerCallback installerCallback);
+    static void UpdateBundleInfoList();
 
     static BundleMgrSliteFeature *GetInstance()
     {
