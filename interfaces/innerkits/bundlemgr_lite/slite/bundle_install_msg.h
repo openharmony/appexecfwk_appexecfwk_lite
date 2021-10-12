@@ -75,6 +75,12 @@ uint32_t GetBundleSize(const char *bundleName);
  */
 bool RegisterInstallerCallback(InstallerCallback installerCallback);
 
+/**
+ * @brief Update bundleInfo when system language has been changed.
+ *
+ */
+void UpdateBundleInfoList(void);
+
 #ifdef __cplusplus
 #if __cplusplus
 }

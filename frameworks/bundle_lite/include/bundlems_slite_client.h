@@ -51,6 +51,8 @@ public:
 
     bool RegisterInstallerCallback(InstallerCallback installerCallback) const;
 
+    void UpdateBundleInfoList() const;
+
 private:
     BundleMsClient() = default;
 
