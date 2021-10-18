@@ -84,6 +84,50 @@ void BundleInfoUtils::CopyBundleInfo(int32_t flags, BundleInfo *des, BundleInfo 
 #endif
 }
 
+void BundleInfoUtils::CopyBundleInfoNoReplication(int32_t flags, BundleInfo *des, BundleInfo src)
+{
+    if (des == nullptr) {
+        return;
+    }
+    des->bundleName = src.bundleName;
+    des->label = src.label;
+    des->versionName = src.versionName;
+    des->bigIconPath = src.bigIconPath;
+    des->codePath = src.codePath;
+    des->dataPath = src.dataPath;
+    des->vendor = src.vendor;
+    if (src.numOfModule != 0) {
+        des->numOfModule = src.numOfModule;
+        des->moduleInfos = src.moduleInfos;
+    }
+    des->isSystemApp = src.isSystemApp;
+    des->versionCode = src.versionCode;
+    des->compatibleApi = src.compatibleApi;
+    des->targetApi = src.targetApi;
+    des->appId = src.appId;
+#ifdef OHOS_APPEXECFWK_BMS_BUNDLEMANAGER
+    des->isKeepAlive = src.isKeepAlive;
+    des->isNativeApp = src.isNativeApp;
+    des->uid = src.uid;
+    des->gid = src.gid;
+    if (flags == GET_BUNDLE_WITH_ABILITIES) {
+        SetBundleInfoAbilityInfos(des, src.abilityInfos, src.numOfAbility);
+    } else {
+        des->abilityInfos = nullptr;
+        des->numOfAbility = 0;
+    }
+#else
+    des->smallIconPath = src.smallIconPath;
+    if (flags == GET_BUNDLE_WITH_ABILITIES) {
+        if (src.abilityInfo != nullptr) {
+            des->abilityInfo = src.abilityInfo;
+        }
+    } else {
+        des->abilityInfo = nullptr;
+    }
+#endif
+}
+
 bool BundleInfoUtils::SetBundleInfoBundleName(BundleInfo *bundleInfo, const char *bundleName)
 {
     if (bundleInfo == nullptr || bundleName == nullptr) {

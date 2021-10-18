@@ -35,6 +35,7 @@ public:
     bool Update(BundleInfo *bundleInfo);
     BundleInfo *Get(const char *bundleName) const;
     uint8_t GetBundleInfos(int32_t flags, BundleInfo **bundleInfos, int32_t *len) const;
+    uint8_t GetBundleInfosNoReplication(int32_t flags, BundleInfo **bundleInfos, int32_t *len) const;
     uint8_t GetBundleInfo(const char *bundleName, int32_t flags, BundleInfo &bundleInfo) const;
     void Erase(const char *bundleName);
     void EraseAll();
