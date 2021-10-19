@@ -81,6 +81,20 @@ bool RegisterInstallerCallback(InstallerCallback installerCallback);
  */
 void UpdateBundleInfoList(void);
 
+ /**
+ * @brief Obtains the {@link BundleInfo} of all bundles with no replication in the system.
+ *
+ * @param flags Specifies whether each of the obtained {@link BundleInfo} objects can contain {@link AbilityInfo}.
+ *               The value <b>1</b> indicates that it can contain {@link AbilityInfo}, and <b>0</b> indicates that
+ *              it cannot.
+ * @param bundleInfos Indicates the double pointer to the obtained {@link BundleInfo} objects.
+ * @param len Indicates the pointer to the number of {@link BundleInfo} objects obtained.
+ * @return Returns {@link ERR_OK} if this function is successfully called; returns another error code defined in
+ *         {@link AppexecfwkErrors} otherwise.
+ *
+ */
+uint8_t GetBundleInfosNoReplication(const int flags, BundleInfo **bundleInfos, int32_t *len);
+
 #ifdef __cplusplus
 #if __cplusplus
 }

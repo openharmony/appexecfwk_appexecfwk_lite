@@ -245,6 +245,14 @@ uint8_t GtManagerService::GetBundleInfos(const int flags, BundleInfo **bundleInf
     return bundleMap_->GetBundleInfos(flags, bundleInfos, len);
 }
 
+uint8_t GtManagerService::GetBundleInfosNoReplication(const int flags, BundleInfo **bundleInfos, int32_t *len)
+{
+    if (bundleMap_ == nullptr) {
+        return ERR_APPEXECFWK_OBJECT_NULL;
+    }
+    return bundleMap_->GetBundleInfosNoReplication(flags, bundleInfos, len);
+}
+
 bool GtManagerService::RegisterInstallerCallback(InstallerCallback installerCallback)
 {
     if (installerCallback == nullptr) {
