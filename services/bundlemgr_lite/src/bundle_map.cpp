@@ -204,6 +204,39 @@ uint8_t BundleMap::GetBundleInfos(int32_t flags, BundleInfo **bundleInfos, int32
     return ERR_OK;
 }
 
+uint8_t BundleMap::GetBundleInfosNoReplication(int32_t flags, BundleInfo **bundleInfos, int32_t *len) const
+{
+    if (bundleInfos == nullptr) {
+        return ERR_APPEXECFWK_QUERY_PARAMETER_ERROR;
+    }
+#ifdef OHOS_APPEXECFWK_BMS_BUNDLEMANAGER
+    MutexAcquire(&g_bundleListMutex, 0);
+#else
+    MutexAcquire(&g_bundleListMutex, BUNDLELIST_MUTEX_TIMEOUT);
+#endif
+    if (bundleInfos_->IsEmpty()) {
+        MutexRelease(&g_bundleListMutex);
+        return ERR_APPEXECFWK_QUERY_NO_INFOS;
+    }
+
+    BundleInfo *infos = reinterpret_cast<BundleInfo *>(AdapterMalloc(sizeof(BundleInfo) * bundleInfos_->Size()));
+    if (infos == nullptr || memset_s(infos, sizeof(BundleInfo) * bundleInfos_->Size(), 0,
+        sizeof(BundleInfo) * bundleInfos_->Size()) != EOK) {
+        AdapterFree(infos);
+        MutexRelease(&g_bundleListMutex);
+        return ERR_APPEXECFWK_QUERY_INFOS_INIT_ERROR;
+    }
+    *bundleInfos = infos;
+
+    for (auto node = bundleInfos_->Begin(); node != bundleInfos_->End(); node = node->next_) {
+        BundleInfoUtils::CopyBundleInfoNoReplication(flags, infos++, *(node->value_));
+    }
+
+    *len = bundleInfos_->Size();
+    MutexRelease(&g_bundleListMutex);
+    return ERR_OK;
+}
+
 uint8_t BundleMap::GetBundleInfo(const char *bundleName, int32_t flags, BundleInfo &bundleInfo) const
 {
     if (bundleName == nullptr) {

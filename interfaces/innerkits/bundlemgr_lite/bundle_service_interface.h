@@ -53,6 +53,7 @@ struct BmsSliteInterface {
     uint32_t (*GetBundleSize)(const char *bundleName);
     bool (*RegisterInstallerCallback)(InstallerCallback installerCallback);
     void (*UpdateBundleInfoList)();
+    uint8_t (*GetBundleInfosNoReplication)(const int flags, BundleInfo **bundleInfos, int32_t *len);
 };
 #ifdef __cplusplus
 #if __cplusplus

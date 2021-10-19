@@ -61,6 +61,7 @@ public:
     uint8_t QueryAbilityInfo(const Want *want, AbilityInfo *abilityInfo);
     uint8_t GetBundleInfo(const char *bundleName, int32_t flags, BundleInfo& bundleInfo);
     uint8_t GetBundleInfos(const int flags, BundleInfo **bundleInfos, int32_t *len);
+    uint8_t GetBundleInfosNoReplication(const int flags, BundleInfo **bundleInfos, int32_t *len);
     void ScanPackages();
     BundleInfo *QueryBundleInfo(const char *bundleName);
     void RemoveBundleInfo(const char *bundleName);

@@ -39,6 +39,7 @@ public:
     static uint32_t GetBundleSize (const char *bundleName);
     static bool RegisterInstallerCallback(InstallerCallback installerCallback);
     static void UpdateBundleInfoList();
+    static uint8_t GetBundleInfosNoReplication(const int flags, BundleInfo **bundleInfos, int32_t *len);
 
     static BundleMgrSliteFeature *GetInstance()
     {

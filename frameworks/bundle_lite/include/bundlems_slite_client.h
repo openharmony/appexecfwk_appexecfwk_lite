@@ -53,6 +53,8 @@ public:
 
     void UpdateBundleInfoList() const;
 
+    uint8_t GetBundleInfosNoReplication(const int flags, BundleInfo **bundleInfos, int32_t *len) const;
+
 private:
     BundleMsClient() = default;
 
