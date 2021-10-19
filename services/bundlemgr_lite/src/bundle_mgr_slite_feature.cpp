@@ -36,6 +36,7 @@ BundleMgrSliteFeatureImpl g_bmsSliteImpl = {
     .GetBundleSize = BundleMgrSliteFeature::GetBundleSize,
     .RegisterInstallerCallback = BundleMgrSliteFeature::RegisterInstallerCallback,
     .UpdateBundleInfoList = BundleMgrSliteFeature::UpdateBundleInfoList,
+    .GetBundleInfosNoReplication = BundleMgrSliteFeature::GetBundleInfosNoReplication,
     DEFAULT_IUNKNOWN_ENTRY_END
 };
 
@@ -143,5 +144,10 @@ bool BundleMgrSliteFeature::RegisterInstallerCallback(InstallerCallback installe
 void BundleMgrSliteFeature::UpdateBundleInfoList()
 {
     OHOS::GtManagerService::GetInstance().UpdateBundleInfoList();
+}
+
+uint8_t BundleMgrSliteFeature::GetBundleInfosNoReplication(const int flags, BundleInfo **bundleInfos, int32_t *len)
+{
+    return OHOS::GtManagerService::GetInstance().GetBundleInfosNoReplication(flags, bundleInfos, len);
 }
 } // namespace OHOS

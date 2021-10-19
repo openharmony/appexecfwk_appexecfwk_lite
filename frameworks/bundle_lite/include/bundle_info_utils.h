@@ -21,6 +21,7 @@
 namespace OHOS {
 struct BundleInfoUtils {
     static void CopyBundleInfo(int32_t flags, BundleInfo *des, BundleInfo src);
+    static void CopyBundleInfoNoReplication(int32_t flags, BundleInfo *des, BundleInfo src);
     static bool SetBundleInfoBundleName(BundleInfo *bundleInfo, const char *bundleName);
     static bool SetBundleInfoVendor(BundleInfo *bundleInfo, const char *vendor);
     static bool SetBundleInfoLabel(BundleInfo *bundleInfo, const char *label);

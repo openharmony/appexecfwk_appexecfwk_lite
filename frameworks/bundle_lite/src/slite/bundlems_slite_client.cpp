@@ -196,4 +196,12 @@ void BundleMsClient::UpdateBundleInfoList () const
     }
     bmsProxy_->UpdateBundleInfoList();
 }
+
+uint8_t BundleMsClient::GetBundleInfosNoReplication (const int flags, BundleInfo **bundleInfos, int32_t *len) const
+{
+    if (!Initialize()) {
+        return -1;
+    }
+    return bmsProxy_->GetBundleInfosNoReplication(flags, bundleInfos, len);
+}
 } //  namespace OHOS

@@ -38,4 +38,9 @@ void UpdateBundleInfoList(void)
 {
     OHOS::BundleMsClient::GetInstance().UpdateBundleInfoList();
 }
+
+uint8_t GetBundleInfosNoReplication(const int flags, BundleInfo **bundleInfos, int32_t *len)
+{
+    return OHOS::BundleMsClient::GetInstance().GetBundleInfosNoReplication(flags, bundleInfos, len);
+}
 }
