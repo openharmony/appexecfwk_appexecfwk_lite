@@ -216,6 +216,7 @@ uint8_t GetBundleInfosByMetaData(const char *metaDataKey, BundleInfo **bundleInf
  */
 uint8_t GetBundleNameForUid(int32_t uid, char **bundleName);
 
+#ifdef OHOS_APPEXECFWK_BMS_BUNDLEMANAGER
 /**
  * @brief Check if the specify syscap name is supported by the system.
  *
@@ -246,7 +247,7 @@ SystemCapability *GetSystemAvailableCapabilities();
  * @version 4
  */
 void FreeSystemAvailableCapabilitiesInfo(SystemCapability *sysCap);
-
+#endif
 /**
  * @brief Get bundle size
  *

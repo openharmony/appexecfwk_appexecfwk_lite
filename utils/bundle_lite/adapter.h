@@ -22,7 +22,7 @@
 #define EXTERNC
 #endif
 
-#ifndef APP_PLATFORM_WATCHGT
+#ifndef __LITEOS_M__
 // memory operator define
 #include <stdlib.h>
 
@@ -43,7 +43,7 @@
 #define MutexAcquire(a, b) pthread_mutex_lock(a)
 #define MutexRelease(a) pthread_mutex_unlock(a)
 
-#else // APP_PLATFORM_WATCHGT
+#else // __LITEOS_M__
 #include "stdint.h"
 #include "ohos_mem_pool.h"
 

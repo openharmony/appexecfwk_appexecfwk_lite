@@ -185,12 +185,14 @@ uint8_t GtBundleExtractor::ExtractInstallMsg(const char *path, char **bundleName
     if (!BundleUtil::CheckRealPath(path)) {
         return ERR_APPEXECFWK_INSTALL_FAILED_PARAM_ERROR;
     }
-
+#ifndef __LITEOS_M__
     int32_t totalFileSize = APPVERI_GetUnsignedFileLength(path);
     if (totalFileSize == V_ERR) {
         return ERR_APPEXECFWK_INSTALL_FAILED_INTERNAL_ERROR;
     }
-
+#else
+    int32_t totalFileSize = 0;
+#endif
     char *emptyJsPathComp[] = {const_cast<char *>(TMP_RESOURCE_DIR), const_cast<char *>(ASSET_JS_PATH)};
     char *emptyJsPath = BundleUtil::Strscat(emptyJsPathComp, sizeof(emptyJsPathComp) / sizeof(char *));
     if (emptyJsPath == nullptr) {

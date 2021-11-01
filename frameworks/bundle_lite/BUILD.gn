@@ -26,28 +26,94 @@ lite_component("appexecfwk_kits_lite") {
 }
 
 lite_library("bundle") {
-  target_type = "shared_library"
-  sources = [
-    "src/ability_info.cpp",
-    "src/ability_info_utils.cpp",
-    "src/bundle_callback.cpp",
-    "src/bundle_callback_utils.cpp",
-    "src/bundle_info.cpp",
-    "src/bundle_info_utils.cpp",
-    "src/bundle_manager.cpp",
-    "src/bundle_self_callback.cpp",
-    "src/convert_utils.cpp",
-    "src/element_name.cpp",
-    "src/module_info.cpp",
-    "src/module_info_utils.cpp",
-    "src/token_generate.cpp",
-  ]
+  if (ohos_kernel_type == "liteos_m") {
+    target_type = "static_library"
 
-  deps = [
-    "${aafwk_lite_path}/frameworks/want_lite:want",
-    "//base/hiviewdfx/hilog_lite/frameworks/featured:hilog_shared",
-    "//base/security/permission/services/permission_lite/pms_client:pms_client",
-  ]
+    sources = [
+      "src/ability_info.cpp",
+      "src/ability_info_utils.cpp",
+      "src/bundle_info.cpp",
+      "src/bundle_info_utils.cpp",
+      "src/element_name.cpp",
+      "src/module_info.cpp",
+      "src/module_info_utils.cpp",
+      "src/slite/bundle_manager.cpp",
+      "src/slite/bundle_manager_inner.cpp",
+      "src/slite/bundlems_slite_client.cpp",
+    ]
+
+    public_deps = [
+      "${aafwk_lite_path}/frameworks/want_lite:want",
+      "//base/hiviewdfx/hilog_lite/frameworks/featured:hilog_static",
+    ]
+
+    include_dirs = [
+      "${appexecfwk_lite_path}/services/bundlemgr_lite/include",
+      "${appexecfwk_lite_path}/interfaces/innerkits/bundlemgr_lite/slite",
+      "${appexecfwk_lite_path}/interfaces/innerkits/bundlemgr_lite",
+      "${appexecfwk_lite_path}/interfaces/kits/bundle_lite/slite",
+      "${appexecfwk_lite_path}/interfaces/kits/bundle_lite",
+      "${appexecfwk_lite_path}/utils/bundle_lite",
+      "${appexecfwk_lite_path}/frameworks/bundle_lite/include",
+      "//base/security/permission/interfaces/kits/permission_lite",
+      "//base/security/permission/services/permission_lite/pms/include",
+      "${aafwk_lite_path}/frameworks/want_lite/include",
+      "${aafwk_lite_path}/interfaces/kits/want_lite",
+      "${aafwk_lite_path}/interfaces/kits/ability_lite/slite",
+      "${aafwk_lite_path}/interfaces/innerkits/abilitymgr_lite",
+      "//foundation/communication/ipc_lite/interfaces/kits",
+      "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
+      "//foundation/distributedschedule/samgr_lite/interfaces/kits/registry",
+      "//third_party/bounds_checking_function/include",
+      "//utils/native/lite/include",
+      "//utils/native/lite/memory/include",
+      "//third_party/cJSON",
+    ]
+  } else {
+    target_type = "shared_library"
+
+    sources = [
+      "src/ability_info.cpp",
+      "src/ability_info_utils.cpp",
+      "src/bundle_callback.cpp",
+      "src/bundle_callback_utils.cpp",
+      "src/bundle_info.cpp",
+      "src/bundle_info_utils.cpp",
+      "src/bundle_manager.cpp",
+      "src/bundle_self_callback.cpp",
+      "src/convert_utils.cpp",
+      "src/element_name.cpp",
+      "src/module_info.cpp",
+      "src/module_info_utils.cpp",
+      "src/token_generate.cpp",
+    ]
+
+    deps = [
+      "${aafwk_lite_path}/frameworks/want_lite:want",
+      "//base/hiviewdfx/hilog_lite/frameworks/featured:hilog_shared",
+      "//base/security/permission/services/permission_lite/pms_client:pms_client",
+    ]
+
+    include_dirs = [
+      "include",
+      "//base/security/permission/interfaces/kits/permission_lite",
+      "//base/security/permission/services/permission_lite/pms/include",
+      "${aafwk_lite_path}/frameworks/want_lite/include",
+      "${aafwk_lite_path}/interfaces/kits/want_lite",
+      "${aafwk_lite_path}/interfaces/innerkits/abilitymgr_lite",
+      "${appexecfwk_lite_path}/interfaces/innerkits/bundlemgr_lite",
+      "${appexecfwk_lite_path}/interfaces/kits/bundle_lite",
+      "${appexecfwk_lite_path}/utils/bundle_lite",
+      "//foundation/communication/ipc_lite/interfaces/kits",
+      "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
+      "//foundation/distributedschedule/samgr_lite/interfaces/kits/registry",
+      "//third_party/bounds_checking_function/include",
+      "//utils/native/lite/include",
+      "//third_party/cJSON",
+    ]
+
+    defines = [ "OHOS_APPEXECFWK_BMS_BUNDLEMANAGER" ]
+  }
 
   cflags = [
     "-fPIC",
@@ -55,26 +121,6 @@ lite_library("bundle") {
     "-Wno-format",
   ]
   cflags_cc = cflags
-
-  include_dirs = [
-    "include",
-    "//base/security/permission/interfaces/kits/permission_lite",
-    "//base/security/permission/services/permission_lite/pms/include",
-    "${aafwk_lite_path}/frameworks/want_lite/include",
-    "${aafwk_lite_path}/interfaces/kits/want_lite",
-    "${aafwk_lite_path}/interfaces/innerkits/abilitymgr_lite",
-    "${appexecfwk_lite_path}/interfaces/innerkits/bundlemgr_lite",
-    "${appexecfwk_lite_path}/interfaces/kits/bundle_lite",
-    "${appexecfwk_lite_path}/utils/bundle_lite",
-    "//foundation/communication/ipc_lite/interfaces/kits",
-    "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
-    "//foundation/distributedschedule/samgr_lite/interfaces/kits/registry",
-    "//third_party/bounds_checking_function/include",
-    "//utils/native/lite/include",
-    "//third_party/cJSON",
-  ]
-
-  defines = [ "OHOS_APPEXECFWK_BMS_BUNDLEMANAGER" ]
 }
 
 ndk_lib("bundle_notes") {

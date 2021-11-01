@@ -97,8 +97,10 @@ private:
         bool isSystemApp, bool isUpdated, const char *appId);
     void RemoveSystemAppPathList(List<ToBeInstalledApp *> *systemPathList);
     void ClearSystemBundleInstallMsg();
+#ifdef BC_TRANS_ENABLE
     void TransformJsToBcWhenRestart(const char *codePath, const char *bundleName);
     void TransformJsToBc(const char *codePath, const char *bundleJsonPath, cJSON *installRecordObj);
+#endif
     bool IsSystemBundleInstalledPath(const char *appPath, const List<ToBeInstalledApp *> *systemPathList);
     AppInfoList *APP_InitAllAppInfo(void);
     void APP_QueryAppInfo(const char *appDir, AppInfoList *list);
@@ -121,6 +123,10 @@ void EnableServiceWdg(void);
 void DisableServiceWdg(void);
 void SetCurrentBundle(const char *name);
 const char *GetCurrentBundle();
+
+#ifdef __LITEOS_M__
+void InstallCallbackFunc(const uint8_t resultCode, const void *resultMessage);
+#endif
 }
 
 #endif // OHOS_GT_BUNDLE_MANAGER_SERVICE_H

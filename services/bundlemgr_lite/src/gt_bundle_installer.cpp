@@ -105,6 +105,7 @@ uint8_t GtBundleInstaller::PreCheckBundle(const char *path, int32_t &fp, Signatu
 uint8_t GtBundleInstaller::VerifySignature(const char *path, SignatureInfo &signatureInfo, uint32_t &fileSize,
     uint8_t bundleStyle)
 {
+#ifndef __LITEOS_M__
     VerifyResult verifyResult;
     // verify signature
     (void) APPVERI_SetDebugMode(true);
@@ -145,6 +146,7 @@ uint8_t GtBundleInstaller::VerifySignature(const char *path, SignatureInfo &sign
         }
     }
     APPVERI_FreeVerifyRst(&verifyResult);
+#endif
     return ERR_OK;
 }
 
@@ -464,6 +466,7 @@ uint8_t GtBundleInstaller::HandleFileAndBackUpRecord(const InstallRecord &record
     return ERR_OK;
 }
 
+#ifdef BC_TRANS_ENABLE
 uint8_t GtBundleInstaller::TransformJsToBc(const char *codePath, InstallRecord &record)
 {
     if (codePath == nullptr) {
@@ -482,11 +485,10 @@ uint8_t GtBundleInstaller::TransformJsToBc(const char *codePath, InstallRecord &
         return ERR_APPEXECFWK_INSTALL_FAILED_TRANSFORM_BC_FILE_ERROR;
     }
     AdapterFree(jsPath);
-#ifdef BC_TRANS_ENABLE
     record.transformResult = 0;
-#endif
     return ERR_OK;
 }
+#endif
 
 uint8_t GtBundleInstaller::UpdateBundleInfo(uint8_t bundleStyle, uint32_t labelId, uint32_t iconId,
     BundleInfo *bundleInfo, bool isUpdate)
@@ -576,11 +578,11 @@ uint8_t GtBundleInstaller::Uninstall(const char *bundleName)
     if (sprintf_s(bundleJsonPath, PATH_LENGTH, "%s%s%s", JSON_PATH, bundleName, JSON_SUFFIX) < 0) {
         return ERR_APPEXECFWK_UNINSTALL_FAILED_INTERNAL_ERROR;
     }
-
+#ifndef __LITEOS_M__
     if (DeletePermissions(const_cast<char *>(bundleName)) < 0) {
         return ERR_APPEXECFWK_UNINSTALL_FAILED_DELETE_PERMISSIONS_ERROR;
     }
-
+#endif
     bool res = CheckIsThirdSystemBundle(bundleName);
     if (!(BundleUtil::RemoveDir(bundleInfo->codePath) && BundleUtil::RemoveDir(bundleInfo->dataPath))) {
         GtManagerService::GetInstance().RemoveBundleInfo(bundleName);
@@ -733,10 +735,12 @@ uint8_t GtBundleInstaller::StorePermissions(const char *bundleName, PermissionTr
     bool isUpdate)
 {
     if (permNum == 0) {
+#ifndef __LITEOS_M__
         if (isUpdate) {
             int32_t ret = DeletePermissions(bundleName);
             HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] delete permissions, result is %d", ret);
         }
+#endif
         return ERR_OK;
     }
 
@@ -747,11 +751,12 @@ uint8_t GtBundleInstaller::StorePermissions(const char *bundleName, PermissionTr
     if (!BundleUtil::IsDir(PERMISSIONS_PATH)) {
         BundleUtil::MkDirs(PERMISSIONS_PATH);
     }
-
+#ifndef __LITEOS_M__
     if (SaveOrUpdatePermissions(const_cast<char *>(bundleName), permissions, permNum,
         static_cast<IsUpdate>(isUpdate)) != 0) {
             return ERR_APPEXECFWK_INSTALL_FAILED_STORE_PERMISSIONS_ERROR;
     }
+#endif
     return ERR_OK;
 }
 

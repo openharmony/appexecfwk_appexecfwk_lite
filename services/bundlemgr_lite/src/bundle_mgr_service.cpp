@@ -38,8 +38,12 @@ static void Init()
 {
     SamgrLite *sm = SAMGR_GetInstance();
     CHECK_NULLPTR_RETURN(sm, "BundleManagerService", "get samgr error");
+#ifdef __LITEOS_M__
+    sm->RegisterService(BundleMgrService::GetInstance());
+#else
     BOOL result = sm->RegisterService(BundleMgrService::GetInstance());
     PRINTI("BundleManagerService", "bms starts %{public}s", result ? "successfully" : "unsuccessfully");
+#endif
 }
 SYSEX_SERVICE_INIT(Init);
 
@@ -58,8 +62,8 @@ BOOL BundleMgrService::ServiceInitialize(Service *service, Identity identity)
     bundleManagerService->identity_ = identity;
     Request request = {
         .msgId = BMS_SCAN_PACKAGE_MSG,
-        .data = nullptr,
         .len = 0,
+        .data = nullptr,
         .msgValue = 0,
     };
     (void) SAMGR_SendRequest(bundleManagerService->GetIdentity(), &request, nullptr);

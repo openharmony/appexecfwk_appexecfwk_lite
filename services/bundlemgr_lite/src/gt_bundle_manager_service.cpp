@@ -109,9 +109,13 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
 
     SetCurrentBundle(bundleInstallMsg_->bundleName);
     (void) ReportInstallCallback(OPERATION_DOING, 0, BMS_INSTALLATION_START, installerCallback);
+#ifndef __LITEOS_M__
     DisableServiceWdg();
     ret = installer_->Install(path, installerCallback);
     EnableServiceWdg();
+#else
+    ret = installer_->Install(path, installerCallback);
+#endif
     if (ret == 0) {
         (void) ReportInstallCallback(ret, BUNDLE_INSTALL_OK, BMS_INSTALLATION_COMPLETED, installerCallback);
     } else {
@@ -342,12 +346,14 @@ void GtManagerService::ClearSystemBundleInstallMsg()
 
 void GtManagerService::ScanPackages()
 {
+#ifdef BC_TRANS_ENABLE
     JerryBmsPsRamMemInit();
     bms_task_context_init();
     jsEngineVer_ = get_jerry_version_no();
     if (jsEngineVer_ == nullptr) {
         HILOG_WARN(HILOG_MODULE_AAFWK, "[BMS] get jsEngine version fail when restart!");
     }
+#endif
 
     // get third system bundle uninstall record
     cJSON *uninstallRecord = BundleUtil::GetJsonStream(UNINSTALL_THIRD_SYSTEM_BUNDLE_JSON);
@@ -363,6 +369,10 @@ void GtManagerService::ScanPackages()
 
     // scan third apps
     ScanThirdApp(INSTALL_PATH, &systemPathList_);
+
+#ifdef __LITEOS_M__
+    RegisterInstallerCallback(InstallCallbackFunc);
+#endif
 }
 
 void GtManagerService::RemoveSystemAppPathList(List<ToBeInstalledApp *> *systemPathList)
@@ -707,6 +717,7 @@ void GtManagerService::UpdateBundleInfoList()
     }
 }
 
+#ifdef BC_TRANS_ENABLE
 void GtManagerService::TransformJsToBcWhenRestart(const char *codePath, const char *bundleName)
 {
     if (codePath == nullptr) {
@@ -812,6 +823,7 @@ void GtManagerService::TransformJsToBc(const char *codePath, const char *bundleJ
     }
     (void)BundleUtil::StoreJsonContentToFile(bundleJsonPath, installRecordObj);
 }
+#endif
 
 bool GtManagerService::CheckThirdSystemBundleHasUninstalled(const char *bundleName, const cJSON *object)
 {
