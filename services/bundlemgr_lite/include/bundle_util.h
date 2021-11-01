@@ -26,6 +26,11 @@
 #endif
 #include "cJSON.h"
 
+#ifdef __LITEOS_M__
+#define S_IREAD S_IRUSR
+#define S_IWRITE S_IWUSR
+#endif
+
 namespace OHOS {
 class BundleUtil {
 public:

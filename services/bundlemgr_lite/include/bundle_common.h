@@ -195,7 +195,11 @@ const char JSON_SUB_KEY_GID[] = "gid";
 #endif
 
 struct ProfileVersion {
+#ifdef __LITEOS_M__
+    int32_t versionCode;
+#else
     uint32_t versionCode;
+#endif
     char *versionName;
 };
 
