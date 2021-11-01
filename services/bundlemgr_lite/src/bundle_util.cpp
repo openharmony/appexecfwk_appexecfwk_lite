@@ -43,7 +43,11 @@ namespace OHOS {
 const char DIGITSTR[] = "0123456789";
 const uint8_t MAX_CHARACTER_VALUE = 26;
 const uint8_t NUM_OF_TYPE = 3;
+#ifdef __LITEOS_M__
+const int32_t MAX_JSON_SIZE = 1024 * 64;
+#else
 const uint32_t MAX_JSON_SIZE = 1024 * 64;
+#endif
 
 /*
  * path should not include ".." or "./" or ".\0"
@@ -573,7 +577,7 @@ void BundleUtil::CreateRandStr(char *str, uint32_t len)
     if (str == nullptr) {
         return;
     }
-#ifndef APP_PLATFORM_WATCHGT
+#ifdef OHOS_APPEXECFWK_BMS_BUNDLEMANAGER
     srand(time(NULL));
 #else
     srand(LOS_TickCountGet());

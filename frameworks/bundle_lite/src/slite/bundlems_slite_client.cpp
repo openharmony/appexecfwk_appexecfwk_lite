@@ -83,8 +83,8 @@ bool BundleMsClient::Install(const char *hapPath, const InstallParam *installPar
     g_bmsbuff->bundleInstallerCallback = installerCallback;
     Request request = {
         .msgId = BMS_INSTALL_MSG,
-        .data = nullptr,
         .len = 0,
+        .data = nullptr,
         .msgValue = 0,
     };
 
@@ -118,8 +118,8 @@ bool BundleMsClient::Uninstall (const char *bundleName, const InstallParam *inst
     g_bmsbuff->bundleInstallerCallback = installerCallback;
     Request request = {
         .msgId = BMS_UNINSTALL_MSG,
-        .data = nullptr,
         .len = 0,
+        .data = nullptr,
         .msgValue = 0,
     };
     int32_t ret = SAMGR_SendRequest(service->GetIdentity(), &request, nullptr);
@@ -141,8 +141,8 @@ bool BundleMsClient::RegisterInstallerCallback (InstallerCallback installerCallb
     g_bmsbuff->bundleInstallerCallback = installerCallback;
     Request request = {
         .msgId = BMS_REGISTER_CALLBACK_MSG,
-        .data = nullptr,
         .len = 0,
+        .data = nullptr,
         .msgValue = 0,
     };
     int32_t ret = SAMGR_SendRequest(service->GetIdentity(), &request, nullptr);

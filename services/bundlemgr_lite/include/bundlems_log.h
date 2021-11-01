@@ -24,7 +24,7 @@ namespace OHOS {
 #undef LOG_DOMAIN
 #define LOG_DOMAIN 0xD001300
 
-#ifdef APP_PLATFORM_WATCHGT
+#ifdef __LITEOS_M__
 #ifndef HILOG_DEBUG
 #define HILOG_DEBUG(mod, format, ...)
 #endif

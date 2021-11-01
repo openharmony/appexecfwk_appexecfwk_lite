@@ -312,7 +312,7 @@ bool GtBundleParser::CheckDeviceTypeIsValid(const cJSON *deviceTypeObject)
         return false;
     }
 
-    const char const *deviceType = GetDeviceType();
+    const char *deviceType = GetDeviceType();
     if (deviceType == nullptr) {
         return false;
     }
@@ -419,7 +419,11 @@ BundleInfo *GtBundleParser::CreateBundleInfo(const char *path, const BundleProfi
         return nullptr;
     }
     // set abilityInfo
+#ifdef __LITEOS_M__
+    AbilityInfo abilityInfo = {.srcPath = jsPath, .bundleName = bundleInfo->bundleName};
+#else
     AbilityInfo abilityInfo = {.bundleName = bundleInfo->bundleName, .srcPath = jsPath};
+#endif
     if (!BundleInfoUtils::SetBundleInfoAbilityInfo(bundleInfo, abilityInfo)) {
         AdapterFree(abilityInfo.srcPath);
         BundleInfoUtils::FreeBundleInfo(bundleInfo);
@@ -602,7 +606,11 @@ uint8_t GtBundleParser::SaveBundleInfo(const BundleProfile &bundleProfile, const
         *bundleInfo = nullptr;
         return ERR_APPEXECFWK_INSTALL_FAILED_INTERNAL_ERROR;
     }
+#ifdef __LITEOS_M__
+    AbilityInfo abilityInfo = {.srcPath = jsPath, .bundleName = (*bundleInfo)->bundleName};
+#else
     AbilityInfo abilityInfo = {.bundleName = (*bundleInfo)->bundleName, .srcPath = jsPath};
+#endif
     // set abilityInfo
     if (!BundleInfoUtils::SetBundleInfoAbilityInfo(*bundleInfo, abilityInfo)) {
         AdapterFree(jsPath);
