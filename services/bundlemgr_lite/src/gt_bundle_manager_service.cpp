@@ -1044,4 +1044,11 @@ const char *GetCurrentBundle()
     MutexRelease(&g_currentBundleMutex);
     return bundleName;
 }
+
+#ifdef __LITEOS_M__
+void InstallCallbackFunc(const uint8_t resultCode, const void *resultMessage)
+{
+    return;
+}
+#endif
 }
