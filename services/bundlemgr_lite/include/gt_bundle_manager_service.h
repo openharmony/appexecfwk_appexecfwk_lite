@@ -121,10 +121,6 @@ void EnableServiceWdg(void);
 void DisableServiceWdg(void);
 void SetCurrentBundle(const char *name);
 const char *GetCurrentBundle();
-
-#ifdef __LITEOS_M__
-void InstallCallbackFunc(const uint8_t resultCode, const void *resultMessage);
-#endif
 }
 
 #endif // OHOS_GT_BUNDLE_MANAGER_SERVICE_H

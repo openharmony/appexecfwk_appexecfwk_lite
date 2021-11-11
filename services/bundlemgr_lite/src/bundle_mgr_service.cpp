@@ -98,7 +98,11 @@ BOOL BundleMgrService::ServiceMessageHandle(Service *service, Request *request)
 
 TaskConfig BundleMgrService::GetServiceTaskConfig(Service *service)
 {
+#ifdef __LITEOS_M__
+    TaskConfig config = {LEVEL_HIGH, PRI_ABOVE_NORMAL, STACK_SIZE, QUEUE_SIZE, SINGLE_TASK};
+#else
     TaskConfig config = {LEVEL_HIGH, PRI_BELOW_NORMAL, STACK_SIZE, QUEUE_SIZE, SINGLE_TASK};
+#endif
     return config;
 }
 } // namespace OHOS
