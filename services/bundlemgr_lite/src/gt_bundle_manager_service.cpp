@@ -63,15 +63,18 @@ GtManagerService::~GtManagerService()
 bool GtManagerService::Install(const char *hapPath, const InstallParam *installParam,
     InstallerCallback installerCallback)
 {
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] install start");
     if (installer_ == nullptr) {
         installer_ = new GtBundleInstaller();
     }
     if (hapPath == nullptr) {
         return false;
     }
+#ifndef __LITEOS_M__
     if (installerCallback == nullptr) {
         return false;
     }
+#endif
     char *path = reinterpret_cast<char *>(AdapterMalloc(strlen(hapPath) + 1));
     if (path == nullptr) {
         return false;
@@ -81,6 +84,7 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
         return false;
     }
 
+#ifndef __LITEOS_M__
     // delete resource temp dir first
     (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
     // create new bundleInstallMsg
@@ -109,13 +113,9 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
 
     SetCurrentBundle(bundleInstallMsg_->bundleName);
     (void) ReportInstallCallback(OPERATION_DOING, 0, BMS_INSTALLATION_START, installerCallback);
-#ifndef __LITEOS_M__
     DisableServiceWdg();
     ret = installer_->Install(path, installerCallback);
     EnableServiceWdg();
-#else
-    ret = installer_->Install(path, installerCallback);
-#endif
     if (ret == 0) {
         (void) ReportInstallCallback(ret, BUNDLE_INSTALL_OK, BMS_INSTALLATION_COMPLETED, installerCallback);
     } else {
@@ -123,6 +123,10 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
     }
     SetCurrentBundle(nullptr);
     ClearSystemBundleInstallMsg();
+#else
+    uint8_t ret = installer_->Install(path, installerCallback);
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] install ret is %d", ret);
+#endif
     (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
     AdapterFree(path);
     return true;
@@ -138,9 +142,11 @@ bool GtManagerService::Uninstall(const char *bundleName, const InstallParam *ins
         HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] Parsed bundleName to be uninstalled is null");
         return false;
     }
+#ifndef __LITEOS_M__
     if (installerCallback == nullptr) {
         return false;
     }
+#endif
     char *innerBundleName = reinterpret_cast<char *>(AdapterMalloc(strlen(bundleName) + 1));
     if (innerBundleName == nullptr) {
         return false;
@@ -154,6 +160,7 @@ bool GtManagerService::Uninstall(const char *bundleName, const InstallParam *ins
     (void) ReportUninstallCallback(OPERATION_DOING, BUNDLE_UNINSTALL_DOING, innerBundleName,
         BMS_UNINSTALLATION_START, installerCallback);
     uint8_t ret = installer_->Uninstall(innerBundleName);
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] uninstall ret is %d", ret);
     if (ret == 0) {
         (void) ReportUninstallCallback(ret, BUNDLE_UNINSTALL_OK, innerBundleName,
             BMS_INSTALLATION_COMPLETED, installerCallback);
@@ -251,21 +258,25 @@ uint8_t GtManagerService::GetBundleInfos(const int flags, BundleInfo **bundleInf
 
 bool GtManagerService::RegisterInstallerCallback(InstallerCallback installerCallback)
 {
+#ifndef __LITEOS_M__
     if (installerCallback == nullptr) {
         return false;
     }
+#endif
     InstallPreBundle(systemPathList_, installerCallback);
     return true;
 }
 
 void GtManagerService::InstallPreBundle(List<ToBeInstalledApp *> systemPathList, InstallerCallback installerCallback)
 {
+#ifndef __LITEOS_M__
     if (!BundleUtil::IsDir(JSON_PATH_NO_SLASH_END)) {
         BundleUtil::MkDirs(JSON_PATH_NO_SLASH_END);
         InstallAllSystemBundle(installerCallback);
         RemoveSystemAppPathList(&systemPathList);
         return;
     }
+#endif
     for (auto node = systemPathList.Begin(); node != systemPathList.End(); node = node->next_) {
         ToBeInstalledApp *toBeInstalledApp = node->value_;
         if (toBeInstalledApp->isUpdated) {
@@ -347,6 +358,15 @@ void GtManagerService::ScanPackages()
     }
 #endif
 
+#ifdef __LITEOS_M__
+    if (!BundleUtil::MkDirs(INSTALL_PATH) || !BundleUtil::MkDirs(DATA_PATH) ||
+        !BundleUtil::MkDirs(JSON_PATH)) {
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] ScanPackages mkdirs failed!");
+    }
+    if (!BundleUtil::IsDir(SYSTEM_BUNDLE_PATH)) {
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] system bundle path is not exist, unable to pre install!");
+    }
+#endif
     // get third system bundle uninstall record
     cJSON *uninstallRecord = BundleUtil::GetJsonStream(UNINSTALL_THIRD_SYSTEM_BUNDLE_JSON);
     if (uninstallRecord == nullptr) {
@@ -363,7 +383,8 @@ void GtManagerService::ScanPackages()
     ScanThirdApp(INSTALL_PATH, &systemPathList_);
 
 #ifdef __LITEOS_M__
-    RegisterInstallerCallback(InstallCallbackFunc);
+    InstallerCallback installerCallback = nullptr;
+    RegisterInstallerCallback(installerCallback);
 #endif
 }
 
@@ -1044,11 +1065,4 @@ const char *GetCurrentBundle()
     MutexRelease(&g_currentBundleMutex);
     return bundleName;
 }
-
-#ifdef __LITEOS_M__
-void InstallCallbackFunc(const uint8_t resultCode, const void *resultMessage)
-{
-    return;
-}
-#endif
 }

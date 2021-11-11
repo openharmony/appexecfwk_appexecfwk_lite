@@ -252,7 +252,9 @@ uint8_t GtBundleExtractor::ExtractBundleParam(const char *path, int32_t &fpStart
     if (errorCode != ERR_OK) {
         return errorCode;
     }
-
+#ifdef __LITEOS_M__
+    close(fp);
+#endif
     if (strlen(*bundleName) > MAX_BUNDLE_NAME_LEN || strlen(*bundleName) < MIN_BUNDLE_NAME_LEN) {
         return ERR_APPEXECFWK_INSTALL_FAILED_PARSE_INVALID_BUNDLENAME_LENGTH;
     }
