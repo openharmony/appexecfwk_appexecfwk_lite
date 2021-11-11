@@ -238,6 +238,14 @@ uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *ra
     uint8_t errorCode = PreCheckBundle(path, fp, signatureInfo, fileSize, bundleStyle);
     CHECK_PRO_RESULT(errorCode, fp, permissions, bundleInfo, signatureInfo);
     (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_SECOND_FINISHED_PROCESS, installerCallback);
+#ifdef __LITEOS_M__
+    fp = open(path, O_RDONLY, S_IREAD);
+    if (fp < 0) {
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] process bundle install fp open fail");
+        errorCode = ERR_APPEXECFWK_INSTALL_FAILED_FILE_NOT_EXISTS;
+    }
+    CHECK_PRO_RESULT(errorCode, fp, permissions, bundleInfo, signatureInfo);
+#endif
     // parse HarmoyProfile.json, get permissions and bundleInfo
     errorCode = GtBundleParser::ParseHapProfile(fp, fileSize, permissions, bundleRes, &bundleInfo);
     CHECK_PRO_RESULT(errorCode, fp, permissions, bundleInfo, signatureInfo);
