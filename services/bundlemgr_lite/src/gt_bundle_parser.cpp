@@ -402,6 +402,7 @@ BundleInfo *GtBundleParser::CreateBundleInfo(const char *path, const BundleProfi
     uint8_t errorCode = ConvertResInfoToBundleInfo(path, bundleRes.abilityRes->labelId, bundleRes.abilityRes->iconId,
         bundleInfo);
     if (errorCode != ERR_OK) {
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] convert res to bundle info failed!");
         BundleInfoUtils::FreeBundleInfo(bundleInfo);
         return nullptr;
     }
@@ -450,6 +451,7 @@ uint8_t GtBundleParser::ConvertResInfoToBundleInfo(const char *path, uint32_t la
     if (labelId != 0) {
         char *label = nullptr;
         if (GLOBAL_GetValueById(labelId, resPath, &label) != 0) {
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] global get label failed!");
             Free(label);
             AdapterFree(resPath);
             return ERR_APPEXECFWK_INSTALL_FAILED_PARSE_LABEL_RES_ERROR;
@@ -479,6 +481,7 @@ bool GtBundleParser::ConvertIconResToBundleInfo(const char *resPath, uint32_t ic
 
     char *relativeIconPath = nullptr;
     if (GLOBAL_GetValueById(iconId, const_cast<char *>(resPath), &relativeIconPath) != 0) {
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] global get icon failed!");
         return false;
     }
     // set relativeIconDir
