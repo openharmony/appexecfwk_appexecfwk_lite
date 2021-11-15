@@ -92,6 +92,7 @@ uint8_t GtBundleInstaller::PreCheckBundle(const char *path, int32_t &fp, Signatu
     // check number of current installed third bundles whether is to MAX_THIRD_BUNDLE_NUMBER
     if (bundleStyle == THIRD_APP_FLAG) {
         uint32_t numOfBundles = GtManagerService::GetInstance().GetNumOfThirdBundles();
+        HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] bundle num is %d", numOfBundles);
         if (GtManagerService::GetInstance().QueryBundleInfo(bundleName) == nullptr &&
             numOfBundles >= MAX_THIRD_BUNDLE_NUMBER) {
             UI_Free(bundleName);

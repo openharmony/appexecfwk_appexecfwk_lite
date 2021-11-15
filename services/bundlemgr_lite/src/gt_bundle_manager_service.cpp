@@ -98,7 +98,8 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
         &(bundleInstallMsg_->bigIconPath));
 
     if (ret != 0) {
-        char *name = strchr(path, '/');
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] Install extract install msg failed, ret is %d", ret);
+        char *name = strrchr(path, '/');
         bundleInstallMsg_->bundleName = Utils::Strdup(name + 1);
         (void) ReportInstallCallback(ret, BUNDLE_INSTALL_FAIL, BMS_INSTALLATION_COMPLETED, installerCallback);
         ClearSystemBundleInstallMsg();
@@ -112,6 +113,7 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
     DisableServiceWdg();
     ret = installer_->Install(path, installerCallback);
     EnableServiceWdg();
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] Install ret is %d", ret);
     if (ret == 0) {
         (void) ReportInstallCallback(ret, BUNDLE_INSTALL_OK, BMS_INSTALLATION_COMPLETED, installerCallback);
     } else {
@@ -150,6 +152,7 @@ bool GtManagerService::Uninstall(const char *bundleName, const InstallParam *ins
     (void) ReportUninstallCallback(OPERATION_DOING, BUNDLE_UNINSTALL_DOING, innerBundleName,
         BMS_UNINSTALLATION_START, installerCallback);
     uint8_t ret = installer_->Uninstall(innerBundleName);
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] Uninstall ret is %d", ret);
     if (ret == 0) {
         (void) ReportUninstallCallback(ret, BUNDLE_UNINSTALL_OK, innerBundleName,
             BMS_INSTALLATION_COMPLETED, installerCallback);

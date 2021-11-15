@@ -142,6 +142,7 @@ bool GtBundleExtractor::ExtractResourceFile(const char *path, int32_t fp, uint32
 
     uint8_t errorCode = ExtractFileDataPos(fp, index);
     if (errorCode != ERR_OK) {
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] extract file data pos failed!");
         return false;
     }
 
@@ -188,6 +189,7 @@ uint8_t GtBundleExtractor::ExtractInstallMsg(const char *path, char **bundleName
 
     int32_t totalFileSize = APPVERI_GetUnsignedFileLength(path);
     if (totalFileSize == V_ERR) {
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] get unsigned file length failed!");
         return ERR_APPEXECFWK_INSTALL_FAILED_INTERNAL_ERROR;
     }
 
@@ -209,6 +211,7 @@ uint8_t GtBundleExtractor::ExtractInstallMsg(const char *path, char **bundleName
     }
     // extractor config.json、 resources dir and resources.index in TMP_RESOURCE_DIR
     if (!ExtractResourceFile(TMP_RESOURCE_DIR, fp, static_cast<uint32_t>(totalFileSize))) {
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] extract resource file failed!");
         close(fp);
         return ERR_APPEXECFWK_INSTALL_FAILED_PARSE_PROFILE_ERROR;
     }
@@ -217,6 +220,7 @@ uint8_t GtBundleExtractor::ExtractInstallMsg(const char *path, char **bundleName
     BundleRes bundleRes = { 0 };
     BundleInfo *bundleInfo = GtBundleParser::ParseHapProfile(TMP_RESOURCE_DIR, &bundleRes);
     if (bundleInfo == nullptr) {
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] parse hap profile get bundle info failed!");
         return ERR_APPEXECFWK_INSTALL_FAILED_PARSE_PROFILE_ERROR;
     }
     if (bundleRes.abilityRes != nullptr) {
