@@ -121,7 +121,7 @@ uint8_t BundleMgrSliteFeature::GetBundleInfo(const char *bundleName, int32_t fla
     return OHOS::GtManagerService::GetInstance().GetBundleInfo(bundleName, flags, *bundleInfo);
 }
 
-uint8_t BundleMgrSliteFeature::GetBundleInfos(const int flags, BundleInfo **bundleInfos, int32_t *len)
+uint8_t BundleMgrSliteFeature::GetBundleInfos(const int32_t flags, BundleInfo **bundleInfos, int32_t *len)
 {
     return OHOS::GtManagerService::GetInstance().GetBundleInfos(flags, bundleInfos, len);
 }
