@@ -54,6 +54,9 @@ struct BmsSliteInterface {
     bool (*RegisterInstallerCallback)(InstallerCallback installerCallback);
     void (*UpdateBundleInfoList)();
     uint8_t (*GetBundleInfosNoReplication)(const int flags, BundleInfo **bundleInfos, int32_t *len);
+    PreAppList *(*InitPreAppInfo)(void);
+    void (*InsertPreAppInfo)(const char *filePath, PreAppList *list);
+    void (*SetPreAppInfo)(PreAppList *list);
 };
 #ifdef __cplusplus
 #if __cplusplus

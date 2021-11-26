@@ -43,4 +43,19 @@ uint8_t GetBundleInfosNoReplication(const int flags, BundleInfo **bundleInfos, i
 {
     return OHOS::BundleMsClient::GetInstance().GetBundleInfosNoReplication(flags, bundleInfos, len);
 }
+
+PreAppList *InitPreAppInfo(void)
+{
+    return OHOS::BundleMsClient::GetInstance().InitPreAppInfo();
+}
+
+void InsertPreAppInfo(const char *filePath, PreAppList *list)
+{
+    OHOS::BundleMsClient::GetInstance().InsertPreAppInfo(filePath, list);
+}
+
+void SetPreAppInfo(PreAppList *list)
+{
+    OHOS::BundleMsClient::GetInstance().SetPreAppInfo(list);
+}
 }

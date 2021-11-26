@@ -55,6 +55,12 @@ public:
 
     uint8_t GetBundleInfosNoReplication(const int flags, BundleInfo **bundleInfos, int32_t *len) const;
 
+    PreAppList *InitPreAppInfo(void) const;
+
+    void InsertPreAppInfo(const char *filePath, PreAppList *list) const;
+
+    void SetPreAppInfo(PreAppList *list) const;
+
 private:
     BundleMsClient() = default;
 

@@ -37,6 +37,9 @@ BundleMgrSliteFeatureImpl g_bmsSliteImpl = {
     .RegisterInstallerCallback = BundleMgrSliteFeature::RegisterInstallerCallback,
     .UpdateBundleInfoList = BundleMgrSliteFeature::UpdateBundleInfoList,
     .GetBundleInfosNoReplication = BundleMgrSliteFeature::GetBundleInfosNoReplication,
+    .InitPreAppInfo = BundleMgrSliteFeature::InitPreAppInfo,
+    .InsertPreAppInfo = BundleMgrSliteFeature::InsertPreAppInfo,
+    .SetPreAppInfo = BundleMgrSliteFeature::SetPreAppInfo,
     DEFAULT_IUNKNOWN_ENTRY_END
 };
 
@@ -149,5 +152,20 @@ void BundleMgrSliteFeature::UpdateBundleInfoList()
 uint8_t BundleMgrSliteFeature::GetBundleInfosNoReplication(const int flags, BundleInfo **bundleInfos, int32_t *len)
 {
     return OHOS::GtManagerService::GetInstance().GetBundleInfosNoReplication(flags, bundleInfos, len);
+}
+
+PreAppList *BundleMgrSliteFeature::InitPreAppInfo()
+{
+    return OHOS::GtManagerService::GetInstance().InitPreAppInfo();
+}
+
+void BundleMgrSliteFeature::InsertPreAppInfo(const char *filePath, PreAppList *list)
+{
+    OHOS::GtManagerService::GetInstance().InsertPreAppInfo(filePath, list);
+}
+
+void BundleMgrSliteFeature::SetPreAppInfo(PreAppList *list)
+{
+    OHOS::GtManagerService::GetInstance().SetPreAppInfo(list);
 }
 } // namespace OHOS
