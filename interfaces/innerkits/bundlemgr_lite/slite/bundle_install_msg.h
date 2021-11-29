@@ -19,6 +19,7 @@
 #include <stdint.h>
 
 #include "bundle_manager.h"
+#include "los_list.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -26,6 +27,7 @@ extern "C" {
 #endif
 #endif /* __cplusplus */
 
+#define MAX_APP_FILE_PATH_LEN 100
 typedef enum {
     BUNDLE_INSTALL_DOING = 0,
     BUNDLE_INSTALL_OK = 1,
@@ -43,6 +45,11 @@ typedef struct {
     InstallState installState;
     uint8_t installProcess;
 } BundleInstallMsg;
+
+typedef struct {
+    LOS_DL_LIST appDoubleList;
+    char filePath[MAX_APP_FILE_PATH_LEN];
+} PreAppList;
 
 /**
  * @brief Get the install state and install process of the bundle.
@@ -94,6 +101,31 @@ void UpdateBundleInfoList(void);
  *
  */
 uint8_t GetBundleInfosNoReplication(const int flags, BundleInfo **bundleInfos, int32_t *len);
+
+/**
+ * @brief Initializing preset application information.
+ *
+ * @return Returns an empty PreAppList.
+ *
+ */
+PreAppList *InitPreAppInfo(void);
+
+/**
+ * @brief Insert preset application information to the list.
+ *
+ * @param filePath Indicates the file path of the preconfigured application.
+ * @param list Indicates the inserted list.
+ *
+ */
+void InsertPreAppInfo(const char *filePath, PreAppList *list);
+
+/**
+ * @brief Setting the preset application list.
+ *
+ * @param list Indicates the preset application list.
+ *
+ */
+void SetPreAppInfo(PreAppList *list);
 
 #ifdef __cplusplus
 #if __cplusplus

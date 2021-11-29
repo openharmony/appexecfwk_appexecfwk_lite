@@ -204,4 +204,28 @@ uint8_t BundleMsClient::GetBundleInfosNoReplication (const int flags, BundleInfo
     }
     return bmsProxy_->GetBundleInfosNoReplication(flags, bundleInfos, len);
 }
+
+PreAppList *BundleMsClient::InitPreAppInfo () const
+{
+    if (!Initialize()) {
+        return nullptr;
+    }
+    return bmsProxy_->InitPreAppInfo();
+}
+
+void BundleMsClient::InsertPreAppInfo (const char *filePath, PreAppList *list) const
+{
+    if (!Initialize()) {
+        return;
+    }
+    bmsProxy_->InsertPreAppInfo(filePath, list);
+}
+
+void BundleMsClient::SetPreAppInfo(PreAppList *list) const
+{
+    if (!Initialize()) {
+        return;
+    }
+    bmsProxy_->SetPreAppInfo(list);
+}
 } //  namespace OHOS

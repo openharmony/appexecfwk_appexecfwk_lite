@@ -50,6 +50,7 @@ GtManagerService::GtManagerService()
     bundleInstallMsg_ = nullptr;
     jsEngineVer_ = nullptr;
     installedThirdBundleNum_ = 0;
+    preAppList_ = nullptr;
 }
 
 GtManagerService::~GtManagerService()
@@ -267,6 +268,21 @@ bool GtManagerService::RegisterInstallerCallback(InstallerCallback installerCall
 
 void GtManagerService::InstallPreBundle(List<ToBeInstalledApp *> systemPathList, InstallerCallback installerCallback)
 {
+    // get third system bundle uninstall record
+    cJSON *uninstallRecord = BundleUtil::GetJsonStream(UNINSTALL_THIRD_SYSTEM_BUNDLE_JSON);
+    if (uninstallRecord == nullptr) {
+        (void) unlink(UNINSTALL_THIRD_SYSTEM_BUNDLE_JSON);
+    }
+
+    // scan system apps and third system apps
+    ScanSystemApp(uninstallRecord, &systemPathList_);
+    if (uninstallRecord != nullptr) {
+        cJSON_Delete(uninstallRecord);
+    }
+
+    // scan third apps
+    ScanThirdApp(INSTALL_PATH, &systemPathList_);
+
     if (!BundleUtil::IsDir(JSON_PATH_NO_SLASH_END)) {
         BundleUtil::MkDirs(JSON_PATH_NO_SLASH_END);
         InstallAllSystemBundle(installerCallback);
@@ -275,13 +291,14 @@ void GtManagerService::InstallPreBundle(List<ToBeInstalledApp *> systemPathList,
     }
     for (auto node = systemPathList.Begin(); node != systemPathList.End(); node = node->next_) {
         ToBeInstalledApp *toBeInstalledApp = node->value_;
+        if (!BundleUtil::IsFile(toBeInstalledApp->path) ||
+            !BundleUtil::EndWith(toBeInstalledApp->path, INSTALL_FILE_SUFFIX)) {
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] Pre install file path is invalid");
+            continue;
+        }
         if (toBeInstalledApp->isUpdated) {
             (void) ReloadBundleInfo(toBeInstalledApp->installedPath, toBeInstalledApp->appId,
                 toBeInstalledApp->isSystemApp);
-        }
-        if (!BundleUtil::IsFile(toBeInstalledApp->path) ||
-            !BundleUtil::EndWith(toBeInstalledApp->path, INSTALL_FILE_SUFFIX)) {
-            return;
         }
         (void) Install(toBeInstalledApp->path, nullptr, installerCallback);
     }
@@ -290,27 +307,28 @@ void GtManagerService::InstallPreBundle(List<ToBeInstalledApp *> systemPathList,
 
 void GtManagerService::InstallAllSystemBundle(InstallerCallback installerCallback)
 {
-    AppInfoList *list = GtManagerService::APP_InitAllAppInfo();
+    PreAppList *list = preAppList_;
     if (list == nullptr) {
         HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] InstallAllSystemBundle InitAllAppInfo fail, list is nullptr");
         return;
     }
 
-    AppInfoList *currentNode = nullptr;
-    AppInfoList *nextNode = nullptr;
-    LOS_DL_LIST_FOR_EACH_ENTRY_SAFE(currentNode, nextNode, &list->appDoubleList, AppInfoList, appDoubleList) {
-        if ((strcmp(((AppInfoList *)currentNode)->filePath, ".") == 0) ||
-            (strcmp(((AppInfoList *)currentNode)->filePath, "..") == 0)) {
+    PreAppList *currentNode = nullptr;
+    PreAppList *nextNode = nullptr;
+    LOS_DL_LIST_FOR_EACH_ENTRY_SAFE(currentNode, nextNode, &list->appDoubleList, PreAppList, appDoubleList) {
+        if ((strcmp(((PreAppList *)currentNode)->filePath, ".") == 0) ||
+            (strcmp(((PreAppList *)currentNode)->filePath, "..") == 0)) {
             continue;
         }
 
-        if (!BundleUtil::IsFile(((AppInfoList *)currentNode)->filePath) ||
-            !BundleUtil::EndWith(((AppInfoList *)currentNode)->filePath, INSTALL_FILE_SUFFIX)) {
+        if (!BundleUtil::IsFile(((PreAppList *)currentNode)->filePath) ||
+            !BundleUtil::EndWith(((PreAppList *)currentNode)->filePath, INSTALL_FILE_SUFFIX)) {
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] Install all system bundle file path is invalid");
             return;
         }
-        (void) Install(((AppInfoList *)currentNode)->filePath, nullptr, installerCallback);
+        (void) Install(((PreAppList *)currentNode)->filePath, nullptr, installerCallback);
     }
-    GtManagerService::APP_FreeAllAppInfo(list);
+    GtManagerService::FreePreAppInfo(list);
 }
 
 void GtManagerService::ClearSystemBundleInstallMsg()
@@ -351,21 +369,6 @@ void GtManagerService::ScanPackages()
     if (jsEngineVer_ == nullptr) {
         HILOG_WARN(HILOG_MODULE_AAFWK, "[BMS] get jsEngine version fail when restart!");
     }
-
-    // get third system bundle uninstall record
-    cJSON *uninstallRecord = BundleUtil::GetJsonStream(UNINSTALL_THIRD_SYSTEM_BUNDLE_JSON);
-    if (uninstallRecord == nullptr) {
-        (void) unlink(UNINSTALL_THIRD_SYSTEM_BUNDLE_JSON);
-    }
-
-    // scan system apps and third system apps
-    ScanSystemApp(uninstallRecord, &systemPathList_);
-    if (uninstallRecord != nullptr) {
-        cJSON_Delete(uninstallRecord);
-    }
-
-    // scan third apps
-    ScanThirdApp(INSTALL_PATH, &systemPathList_);
 }
 
 void GtManagerService::RemoveSystemAppPathList(List<ToBeInstalledApp *> *systemPathList)
@@ -385,7 +388,7 @@ void GtManagerService::RemoveSystemAppPathList(List<ToBeInstalledApp *> *systemP
 
 void GtManagerService::ScanSystemApp(const cJSON *uninstallRecord, List<ToBeInstalledApp *> *systemPathList)
 {
-    AppInfoList *list = GtManagerService::APP_InitAllAppInfo();
+    PreAppList *list = preAppList_;
     if (list == nullptr) {
         HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] ScanSystemApp InitAllAppInfo fail, list is nullptr");
         return;
@@ -394,25 +397,25 @@ void GtManagerService::ScanSystemApp(const cJSON *uninstallRecord, List<ToBeInst
     uint8_t scanFlag = 0;
     char *bundleName = nullptr;
     int32_t versionCode = -1;
-    AppInfoList *currentNode = nullptr;
-    AppInfoList *nextNode = nullptr;
+    PreAppList *currentNode = nullptr;
+    PreAppList *nextNode = nullptr;
 
-    LOS_DL_LIST_FOR_EACH_ENTRY_SAFE(currentNode, nextNode, &list->appDoubleList, AppInfoList, appDoubleList) {
-        if ((strcmp(((AppInfoList *)currentNode)->filePath, ".") == 0) ||
-            (strcmp(((AppInfoList *)currentNode)->filePath, "..") == 0)) {
+    LOS_DL_LIST_FOR_EACH_ENTRY_SAFE(currentNode, nextNode, &list->appDoubleList, PreAppList, appDoubleList) {
+        if ((strcmp(((PreAppList *)currentNode)->filePath, ".") == 0) ||
+            (strcmp(((PreAppList *)currentNode)->filePath, "..") == 0)) {
             continue;
         }
 
-        if (BundleUtil::StartWith(((AppInfoList *)currentNode)->filePath, SYSTEM_BUNDLE_PATH)) {
+        if (BundleUtil::StartWith(((PreAppList *)currentNode)->filePath, SYSTEM_BUNDLE_PATH)) {
             scanFlag = SYSTEM_APP_FLAG;
-        } else if (BundleUtil::StartWith(((AppInfoList *)currentNode)->filePath, THIRD_SYSTEM_BUNDLE_PATH)) {
+        } else if (BundleUtil::StartWith(((PreAppList *)currentNode)->filePath, THIRD_SYSTEM_BUNDLE_PATH)) {
             scanFlag = THIRD_SYSTEM_APP_FLAG;
         } else {
             continue; // skip third app
         }
 
         // scan system app
-        bool res = CheckSystemBundleIsValid(((AppInfoList *)currentNode)->filePath, &bundleName, versionCode);
+        bool res = CheckSystemBundleIsValid(((PreAppList *)currentNode)->filePath, &bundleName, versionCode);
         if (!res) {
             APP_ERRCODE_EXTRA(EXCE_ACE_APP_SCAN, EXCE_ACE_APP_SCAN_INVALID_SYSTEM_APP);
             AdapterFree(bundleName);
@@ -426,11 +429,11 @@ void GtManagerService::ScanSystemApp(const cJSON *uninstallRecord, List<ToBeInst
             continue;
         }
 
-        ReloadEntireBundleInfo(((AppInfoList *)currentNode)->filePath, bundleName,
+        ReloadEntireBundleInfo(((PreAppList *)currentNode)->filePath, bundleName,
             systemPathList, versionCode, scanFlag);
         AdapterFree(bundleName);
     }
-    GtManagerService::APP_FreeAllAppInfo(list);
+    GtManagerService::FreePreAppInfo(list);
 }
 
 void GtManagerService::ScanThirdApp(const char *appDir, const List<ToBeInstalledApp *> *systemPathList)
@@ -929,26 +932,23 @@ int32_t GtManagerService::ReportUninstallCallback(uint8_t errCode, uint8_t insta
     return 0;
 }
 
-AppInfoList *GtManagerService::APP_InitAllAppInfo()
+PreAppList *GtManagerService::InitPreAppInfo()
 {
-    AppInfoList *list = (AppInfoList *)AdapterMalloc(sizeof(AppInfoList));
+    PreAppList *list = (PreAppList *)AdapterMalloc(sizeof(PreAppList));
     if (list == nullptr) {
         return nullptr;
     }
 
-    if (memset_s(list, sizeof(AppInfoList), 0, sizeof(AppInfoList)) != EOK) {
+    if (memset_s(list, sizeof(PreAppList), 0, sizeof(PreAppList)) != EOK) {
         AdapterFree(list);
         return nullptr;
     }
 
     LOS_ListInit(&list->appDoubleList);
-
-    APP_QueryAppInfo(SYSTEM_BUNDLE_PATH, list);
-    APP_QueryAppInfo(THIRD_SYSTEM_BUNDLE_PATH, list);
     return list;
 }
 
-void GtManagerService::APP_QueryAppInfo(const char *appDir, AppInfoList *list)
+void GtManagerService::QueryPreAppInfo(const char *appDir, PreAppList *list)
 {
     struct dirent *ent = nullptr;
     if (appDir == nullptr) {
@@ -989,24 +989,24 @@ void GtManagerService::APP_QueryAppInfo(const char *appDir, AppInfoList *list)
             continue;
         }
 
-        APP_InsertAppInfo(appPath, (AppInfoList *)&list->appDoubleList);
+        InsertPreAppInfo(appPath, (PreAppList *)&list->appDoubleList);
         AdapterFree(appPath);
     }
     AdapterFree(fileName);
 }
 
-void GtManagerService::APP_InsertAppInfo(char *filePath, AppInfoList *list)
+void GtManagerService::InsertPreAppInfo(const char *filePath, PreAppList *list)
 {
     if ((filePath == nullptr) || (list == nullptr)) {
         return;
     }
 
-    AppInfoList *app = (AppInfoList *)AdapterMalloc(sizeof(AppInfoList));
+    PreAppList *app = (PreAppList *)AdapterMalloc(sizeof(PreAppList));
     if (app == nullptr) {
         return;
     }
 
-    if (memset_s(app, sizeof(AppInfoList), 0, sizeof(AppInfoList)) != 0) {
+    if (memset_s(app, sizeof(PreAppList), 0, sizeof(PreAppList)) != 0) {
         AdapterFree(app);
         return;
     }
@@ -1020,15 +1020,24 @@ void GtManagerService::APP_InsertAppInfo(char *filePath, AppInfoList *list)
     return;
 }
 
-void GtManagerService::APP_FreeAllAppInfo(const AppInfoList *list)
+void GtManagerService::SetPreAppInfo(PreAppList *list)
+{
+    if (list == nullptr) {
+        return;
+    }
+    preAppList_ = list;
+    return;
+}
+
+void GtManagerService::FreePreAppInfo(const PreAppList *list)
 {
     if (list == nullptr) {
         return;
     }
 
-    AppInfoList *currentNode = nullptr;
-    AppInfoList *nextNode = nullptr;
-    LOS_DL_LIST_FOR_EACH_ENTRY_SAFE(currentNode, nextNode, &list->appDoubleList, AppInfoList, appDoubleList) {
+    PreAppList *currentNode = nullptr;
+    PreAppList *nextNode = nullptr;
+    LOS_DL_LIST_FOR_EACH_ENTRY_SAFE(currentNode, nextNode, &list->appDoubleList, PreAppList, appDoubleList) {
         if (currentNode != nullptr) {
             LOS_ListDelete(&(currentNode->appDoubleList));
             AdapterFree(currentNode);

@@ -26,21 +26,15 @@
 #include "install_param.h"
 #include "bundle_install_msg.h"
 #include "bundle_manager.h"
-#include "los_list.h"
 #include "ohos_types.h"
 
 namespace OHOS {
-#define MAX_APP_FILE_PATH_LEN 100
 struct ToBeInstalledApp {
     bool isSystemApp;
     bool isUpdated;
     char *path;
     char *installedPath;
     char *appId;
-};
-struct AppInfoList {
-    LOS_DL_LIST appDoubleList;
-    char filePath[MAX_APP_FILE_PATH_LEN];
 };
 
 typedef enum {
@@ -81,6 +75,9 @@ public:
     bool GetInstallState(const char *bundleName, InstallState *installState, uint8_t *installProcess);
     uint32_t GetBundleSize(const char *bundleName);
     bool RegisterInstallerCallback(InstallerCallback installerCallback);
+    PreAppList *InitPreAppInfo(void);
+    void InsertPreAppInfo(const char *filePath, PreAppList *list);
+    void SetPreAppInfo(PreAppList *list);
 
 private:
     GtManagerService();
@@ -100,11 +97,9 @@ private:
     void TransformJsToBcWhenRestart(const char *codePath, const char *bundleName);
     void TransformJsToBc(const char *codePath, const char *bundleJsonPath, cJSON *installRecordObj);
     bool IsSystemBundleInstalledPath(const char *appPath, const List<ToBeInstalledApp *> *systemPathList);
-    AppInfoList *APP_InitAllAppInfo(void);
-    void APP_QueryAppInfo(const char *appDir, AppInfoList *list);
-    void APP_InsertAppInfo(char *filePath, AppInfoList *list);
-    void APP_FreeAllAppInfo(const AppInfoList *list);
     void InstallPreBundle(List<ToBeInstalledApp *> systemPathList, InstallerCallback installerCallback);
+    void QueryPreAppInfo(const char *appDir, PreAppList *list);
+    void FreePreAppInfo(const PreAppList *list);
 
     GtBundleInstaller *installer_;
     BundleMap *bundleMap_;
@@ -113,6 +108,7 @@ private:
     char *jsEngineVer_;
     uint32_t installedThirdBundleNum_;
     List<ToBeInstalledApp *> systemPathList_;
+    PreAppList *preAppList_;
 };
 }
 
