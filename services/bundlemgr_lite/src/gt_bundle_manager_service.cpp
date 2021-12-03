@@ -268,6 +268,12 @@ bool GtManagerService::RegisterInstallerCallback(InstallerCallback installerCall
 
 void GtManagerService::InstallPreBundle(List<ToBeInstalledApp *> systemPathList, InstallerCallback installerCallback)
 {
+    if (!BundleUtil::IsDir(JSON_PATH_NO_SLASH_END)) {
+        BundleUtil::MkDirs(JSON_PATH_NO_SLASH_END);
+        InstallAllSystemBundle(installerCallback);
+        RemoveSystemAppPathList(&systemPathList);
+        return;
+    }
     // get third system bundle uninstall record
     cJSON *uninstallRecord = BundleUtil::GetJsonStream(UNINSTALL_THIRD_SYSTEM_BUNDLE_JSON);
     if (uninstallRecord == nullptr) {
@@ -282,13 +288,6 @@ void GtManagerService::InstallPreBundle(List<ToBeInstalledApp *> systemPathList,
 
     // scan third apps
     ScanThirdApp(INSTALL_PATH, &systemPathList_);
-
-    if (!BundleUtil::IsDir(JSON_PATH_NO_SLASH_END)) {
-        BundleUtil::MkDirs(JSON_PATH_NO_SLASH_END);
-        InstallAllSystemBundle(installerCallback);
-        RemoveSystemAppPathList(&systemPathList);
-        return;
-    }
     for (auto node = systemPathList.Begin(); node != systemPathList.End(); node = node->next_) {
         ToBeInstalledApp *toBeInstalledApp = node->value_;
         if (!BundleUtil::IsFile(toBeInstalledApp->path) ||
