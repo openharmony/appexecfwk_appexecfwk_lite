@@ -246,6 +246,7 @@ uint8_t GtManagerService::GetBundleInfos(const int flags, BundleInfo **bundleInf
     if (bundleMap_ == nullptr) {
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] GetBundleInfos len is %d", len);
     return bundleMap_->GetBundleInfos(flags, bundleInfos, len);
 }
 
@@ -254,6 +255,7 @@ uint8_t GtManagerService::GetBundleInfosNoReplication(const int flags, BundleInf
     if (bundleMap_ == nullptr) {
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] GetBundleInfosNoReplication len is %d", len);
     return bundleMap_->GetBundleInfosNoReplication(flags, bundleInfos, len);
 }
 
@@ -277,6 +279,7 @@ void GtManagerService::InstallPreBundle(List<ToBeInstalledApp *> systemPathList,
     // get third system bundle uninstall record
     cJSON *uninstallRecord = BundleUtil::GetJsonStream(UNINSTALL_THIRD_SYSTEM_BUNDLE_JSON);
     if (uninstallRecord == nullptr) {
+        HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] InstallPreBundle uninstallRecord is nullptr!");
         (void) unlink(UNINSTALL_THIRD_SYSTEM_BUNDLE_JSON);
     }
 
@@ -416,6 +419,7 @@ void GtManagerService::ScanSystemApp(const cJSON *uninstallRecord, List<ToBeInst
         // scan system app
         bool res = CheckSystemBundleIsValid(((PreAppList *)currentNode)->filePath, &bundleName, versionCode);
         if (!res) {
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] ScanSystemApp CheckSystemBundleIsValid failed!");
             APP_ERRCODE_EXTRA(EXCE_ACE_APP_SCAN, EXCE_ACE_APP_SCAN_INVALID_SYSTEM_APP);
             AdapterFree(bundleName);
             continue;
@@ -447,19 +451,33 @@ void GtManagerService::ScanThirdApp(const char *appDir, const List<ToBeInstalled
     if (dir == nullptr) {
         return;
     }
+    char *bundleName = reinterpret_cast<char *>(AdapterMalloc(MAX_BUNDLE_NAME_LEN + 1));
+    int32_t entLen = 0;
     while ((ent = readdir(dir)) != nullptr) {
-        if ((strcmp(ent->d_name, ".") == 0) || (strcmp(ent->d_name, "..")) == 0) {
+        ++entLen;
+        if (memset_s(bundleName, MAX_BUNDLE_NAME_LEN + 1, 0, MAX_BUNDLE_NAME_LEN + 1) != EOK) {
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] memset fail when initialize bundle name!");
+            break;
+        }
+
+        if (strcpy_s(bundleName, MAX_BUNDLE_NAME_LEN + 1, ent->d_name) != 0) {
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] failed to copy bundle name!");
+            break;
+        }
+
+        if ((strcmp(bundleName, ".") == 0) || (strcmp(bundleName, "..")) == 0) {
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] strcmp fail when reload third app!");
             continue;
         }
 
-        int32_t len = strlen(appDir) + 1 + strlen(ent->d_name) + 1;
+        int32_t len = strlen(appDir) + 1 + strlen(bundleName) + 1;
         char *appPath = reinterpret_cast<char *>(UI_Malloc(len));
         if (appPath == nullptr) {
             HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] malloc fail when reload third app!");
             break;
         }
 
-        if (sprintf_s(appPath, len, "%s/%s", appDir, ent->d_name) < 0) {
+        if (sprintf_s(appPath, len, "%s/%s", appDir, bundleName) < 0) {
             HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] strcat fail when reload third app!");
             UI_Free(appPath);
             break;
@@ -472,20 +490,23 @@ void GtManagerService::ScanThirdApp(const char *appDir, const List<ToBeInstalled
         }
 
         if (IsSystemBundleInstalledPath(appPath, systemPathList)) {
-            HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] app path is not third bundle path!");
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] app path is not third bundle path!");
             UI_Free(appPath);
             continue;
         }
 
         if (installedThirdBundleNum_ >= MAX_THIRD_BUNDLE_NUMBER) {
-            HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] third bundle reload number is to MAX_THIRD_BUNDLE_NUMBER!");
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] third bundle reload number is %d!", installedThirdBundleNum_);
             UI_Free(appPath);
             continue;
         }
 
-        ReloadEntireBundleInfo(appPath, ent->d_name, nullptr, -1, THIRD_APP_FLAG);
+        ReloadEntireBundleInfo(appPath, bundleName, nullptr, -1, THIRD_APP_FLAG);
         UI_Free(appPath);
     }
+
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] third app number is %d", entLen);
+    AdapterFree(bundleName);
     closedir(dir);
 }
 
@@ -534,6 +555,7 @@ void GtManagerService::ReloadEntireBundleInfo(const char *appPath, const char *b
     int32_t oldVersionCode = -1;
 
     if (appPath == nullptr || bundleName == nullptr) {
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] ReloadEntireBundleInfo app path or bundle name is nullptr!");
         APP_ERRCODE_EXTRA(EXCE_ACE_APP_SCAN, EXCE_ACE_APP_SCAN_UNKNOWN_BUNDLE_INFO);
         return;
     }
@@ -560,6 +582,7 @@ void GtManagerService::ReloadEntireBundleInfo(const char *appPath, const char *b
         }
     } else {
         if (!res && !BundleUtil::CheckBundleJsonIsValid(bundleName, &codePath, &appId, oldVersionCode)) {
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] ReloadEntireBundleInfo CheckBundleJsonIsValid failed!");
             RecordAbiityInfoEvt(bundleName);
             APP_ERRCODE_EXTRA(EXCE_ACE_APP_SCAN, EXCE_ACE_APP_SCAN_PARSE_JSON_FALIED);
             AdapterFree(appId);
