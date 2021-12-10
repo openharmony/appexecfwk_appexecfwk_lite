@@ -51,6 +51,8 @@ GtManagerService::GtManagerService()
     jsEngineVer_ = nullptr;
     installedThirdBundleNum_ = 0;
     preAppList_ = nullptr;
+    updateFlag_ = false;
+    oldVersionCode_ = -1;
 }
 
 GtManagerService::~GtManagerService()
@@ -107,6 +109,15 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
         (void) BundleUtil::RemoveDir(TMP_RESOURCE_DIR);
         AdapterFree(path);
         return false;
+    }
+
+    updateFlag_ = false;
+    oldVersionCode_ = -1;
+    BundleInfo *installedInfo = bundleMap_->Get(bundleInstallMsg_->bundleName);
+    if (installedInfo != nullptr) {
+        updateFlag_ = true;
+        oldVersionCode_ = installedInfo->versionCode;
+        HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] App is in the updated state");
     }
 
     SetCurrentBundle(bundleInstallMsg_->bundleName);
@@ -174,9 +185,12 @@ bool GtManagerService::GetInstallState(const char *bundleName, InstallState *ins
     }
     BundleInfo *installedInfo = bundleMap_->Get(bundleName);
     if (installedInfo != nullptr) {
-        *installState = BUNDLE_INSTALL_OK;
-        *installProcess = BMS_INSTALLATION_COMPLETED;
-        return true;
+        bool isUpdateSuccess = updateFlag_ && oldVersionCode_ < installedInfo->versionCode;
+        if (!updateFlag_ || isUpdateSuccess) {
+            *installState = BUNDLE_INSTALL_OK;
+            *installProcess = BMS_INSTALLATION_COMPLETED;
+            return true;
+        }
     }
     if (bundleInstallMsg_ == nullptr || bundleInstallMsg_->bundleName == nullptr) {
         *installState = BUNDLE_INSTALL_FAIL;

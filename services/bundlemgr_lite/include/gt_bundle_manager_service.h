@@ -109,6 +109,8 @@ private:
     uint32_t installedThirdBundleNum_;
     List<ToBeInstalledApp *> systemPathList_;
     PreAppList *preAppList_;
+    bool updateFlag_;
+    int32_t oldVersionCode_;
 };
 }
 
