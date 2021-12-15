@@ -163,7 +163,9 @@ bool GtManagerService::Uninstall(const char *bundleName, const InstallParam *ins
 
     (void) ReportUninstallCallback(OPERATION_DOING, BUNDLE_UNINSTALL_DOING, innerBundleName,
         BMS_UNINSTALLATION_START, installerCallback);
+    DisableServiceWdg();
     uint8_t ret = installer_->Uninstall(innerBundleName);
+    EnableServiceWdg();
     HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] Uninstall ret is %d", ret);
     if (ret == 0) {
         (void) ReportUninstallCallback(ret, BUNDLE_UNINSTALL_OK, innerBundleName,
