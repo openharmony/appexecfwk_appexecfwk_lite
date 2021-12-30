@@ -1,0 +1,58 @@
+{
+    "name": "@ohos/appexecfwk_lite",
+    "version": "",
+    "description": "轻量级包管理框架子系统，是鸿蒙系统为开发者提供的安装包管理框架",
+    "homePage": "https://gitee.com/openharmony",
+    "license": "Apache V2",
+    "repository": "https://gitee.com/openharmony/appexecfwk_appexecfwk_lite",
+    "domain": "os",
+    "language": "",
+    "publishAs": "code-segment",
+    "private": false,
+    "scripts": {},
+    "tags": [
+        "foundation"
+    ],
+    "keywords": [
+        "appexecfwk",
+        "lite"
+    ],
+    "envs": [],
+    "dirs": [],
+    "author": {
+        "name": "",
+        "email": "",
+        "url": ""
+    },
+    "contributors": [
+        {
+            "name": "",
+            "email": "",
+            "url": ""
+        }
+    ],
+    "segment": {
+        "destPath": "foundation/appexecfwk/appexecfwk_lite"
+    },
+    "component": {
+        "name": "appexecfwk_lite",
+        "subsystem": "appexecfwk",
+        "syscap": [],
+        "features": [],
+        "adapted_system_type": [
+            "mini",
+            "small"
+        ],
+        "rom": "",
+        "ram": "",
+        "deps": {
+            "components": [],
+            "third_party": []
+        },
+        "build": {
+            "sub_component": [],
+            "inner_kits": [],
+            "test": []
+        }
+    }
+}
