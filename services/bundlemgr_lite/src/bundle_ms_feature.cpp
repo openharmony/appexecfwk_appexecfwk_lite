@@ -33,7 +33,9 @@
 #include "want_utils.h"
 
 namespace OHOS {
+#ifdef __LINUX__
 constexpr static uint32_t MAX_IPC_STRING_LENGTH = 8192UL;
+#endif
 static BmsImpl g_bmsImpl = {
     SERVER_IPROXY_IMPL_BEGIN,
     .Invoke = BundleMsFeature::Invoke,
