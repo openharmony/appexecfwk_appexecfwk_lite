@@ -101,7 +101,7 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
         &(bundleInstallMsg_->bigIconPath));
 
     if (ret != 0) {
-        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] Install extract install msg failed, ret is %d", ret);
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] Install extract install msg failed, ret is %{public}d", ret);
         char *name = strrchr(path, '/');
         bundleInstallMsg_->bundleName = Utils::Strdup(name + 1);
         (void) ReportInstallCallback(ret, BUNDLE_INSTALL_FAIL, BMS_INSTALLATION_COMPLETED, installerCallback);
@@ -125,7 +125,7 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
     DisableServiceWdg();
     ret = installer_->Install(path, installerCallback);
     EnableServiceWdg();
-    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] Install ret is %d", ret);
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] Install ret is %{public}d", ret);
     if (ret == 0) {
         (void) ReportInstallCallback(ret, BUNDLE_INSTALL_OK, BMS_INSTALLATION_COMPLETED, installerCallback);
     } else {
@@ -166,7 +166,7 @@ bool GtManagerService::Uninstall(const char *bundleName, const InstallParam *ins
     DisableServiceWdg();
     uint8_t ret = installer_->Uninstall(innerBundleName);
     EnableServiceWdg();
-    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] Uninstall ret is %d", ret);
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] Uninstall ret is %{public}d", ret);
     if (ret == 0) {
         (void) ReportUninstallCallback(ret, BUNDLE_UNINSTALL_OK, innerBundleName,
             BMS_INSTALLATION_COMPLETED, installerCallback);
@@ -262,7 +262,7 @@ uint8_t GtManagerService::GetBundleInfos(const int flags, BundleInfo **bundleInf
     if (bundleMap_ == nullptr) {
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
-    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] GetBundleInfos len is %d", len);
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] GetBundleInfos len is %{public}d", len);
     return bundleMap_->GetBundleInfos(flags, bundleInfos, len);
 }
 
@@ -271,7 +271,7 @@ uint8_t GtManagerService::GetBundleInfosNoReplication(const int flags, BundleInf
     if (bundleMap_ == nullptr) {
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
-    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] GetBundleInfosNoReplication len is %d", len);
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] GetBundleInfosNoReplication len is %{public}d", len);
     return bundleMap_->GetBundleInfosNoReplication(flags, bundleInfos, len);
 }
 
@@ -512,7 +512,7 @@ void GtManagerService::ScanThirdApp(const char *appDir, const List<ToBeInstalled
         }
 
         if (installedThirdBundleNum_ >= MAX_THIRD_BUNDLE_NUMBER) {
-            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] third bundle reload number is %d!", installedThirdBundleNum_);
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] third bundle reload number is %{public}d!", installedThirdBundleNum_);
             UI_Free(appPath);
             continue;
         }
@@ -521,7 +521,7 @@ void GtManagerService::ScanThirdApp(const char *appDir, const List<ToBeInstalled
         UI_Free(appPath);
     }
 
-    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] third app number is %d", entLen);
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] third app number is %{public}d", entLen);
     AdapterFree(bundleName);
     closedir(dir);
 }
@@ -674,7 +674,7 @@ bool GtManagerService::ReloadBundleInfo(const char *profileDir, const char *appI
     AdapterFree(bundleRes->abilityRes);
     AdapterFree(bundleRes);
     APP_ERRCODE_EXTRA(EXCE_ACE_APP_SCAN, EXCE_ACE_APP_SCAN_PARSE_PROFILE_FALIED);
-    HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] reload bundle info fail!, isSystemApp is %d", isSystemApp);
+    HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] reload bundle info fail!, isSystemApp is %{public}d", isSystemApp);
     BundleUtil::RemoveDir(profileDir);
     return false;
 }
@@ -745,7 +745,7 @@ void GtManagerService::UpdateBundleInfoList()
             res->abilityRes->iconId, bundleInfo);
         UI_Free(path);
         if (errorCode != ERR_OK) {
-            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] change bundle res failed! errorCode is %d", errorCode);
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] change bundle res failed! errorCode is %{public}d", errorCode);
             return;
         }
     }
@@ -827,10 +827,10 @@ void GtManagerService::TransformJsToBc(const char *codePath, const char *bundleJ
     DisableServiceWdg();
     EXECRES result = walk_directory(jsPath);
     EnableServiceWdg();
-    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] transform js to bc, result is %d", result);
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] transform js to bc, result is %{public}d", result);
     if (result != EXCE_ACE_JERRY_EXEC_OK) {
         result = walk_del_bytecode(jsPath);
-        HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] delete byte code, result is %d", result);
+        HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] delete byte code, result is %{public}d", result);
         AdapterFree(jsPath);
         return;
     }
