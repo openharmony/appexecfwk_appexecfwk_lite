@@ -92,9 +92,10 @@ uint8_t GtBundleInstaller::PreCheckBundle(const char *path, int32_t &fp, Signatu
     // check number of current installed third bundles whether is to MAX_THIRD_BUNDLE_NUMBER
     if (bundleStyle == THIRD_APP_FLAG) {
         uint32_t numOfBundles = GtManagerService::GetInstance().GetNumOfThirdBundles();
-        HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] bundle num is %d", numOfBundles);
+        HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] bundle num is %{public}d", numOfBundles);
         if (GtManagerService::GetInstance().QueryBundleInfo(bundleName) == nullptr &&
             numOfBundles >= MAX_THIRD_BUNDLE_NUMBER) {
+            HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] bundle quantity exceeds the limit!");
             UI_Free(bundleName);
             return ERR_APPEXECFWK_INSTALL_FAILED_EXCEED_MAX_BUNDLE_NUMBER;
         }
@@ -111,7 +112,7 @@ uint8_t GtBundleInstaller::VerifySignature(const char *path, SignatureInfo &sign
     (void) APPVERI_SetDebugMode(true);
     int32_t ret = (bundleStyle == THIRD_APP_FLAG) ? APPVERI_AppVerify(path, &verifyResult) :
         APPVERI_AppVerify(path, &verifyResult);
-    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] APPVERI_AppVerify is %d", ret);
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] APPVERI_AppVerify is %{public}d", ret);
     uint8_t errorCode = SwitchErrorCode(ret);
     if (errorCode != ERR_OK) {
         return errorCode;
@@ -477,7 +478,7 @@ uint8_t GtBundleInstaller::TransformJsToBc(const char *codePath, InstallRecord &
         return ERR_APPEXECFWK_INSTALL_FAILED_INTERNAL_ERROR;
     }
     EXECRES result = walk_directory(jsPath);
-    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] transform js to bc when install, result is %d", result);
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] transform js to bc when install, result is %{public}d", result);
     if (result != EXCE_ACE_JERRY_EXEC_OK) {
         AdapterFree(jsPath);
         return ERR_APPEXECFWK_INSTALL_FAILED_TRANSFORM_BC_FILE_ERROR;
@@ -736,7 +737,7 @@ uint8_t GtBundleInstaller::StorePermissions(const char *bundleName, PermissionTr
     if (permNum == 0) {
         if (isUpdate) {
             int32_t ret = DeletePermissions(bundleName);
-            HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] delete permissions, result is %d", ret);
+            HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] delete permissions, result is %{public}d", ret);
         }
         return ERR_OK;
     }
