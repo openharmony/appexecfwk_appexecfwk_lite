@@ -65,7 +65,6 @@ private:
     uint8_t AddBundleResList(const char *bundleName, uint32_t labelId, uint32_t iconId);
     uint8_t MoveRawFileToDataPath(const BundleInfo *bundleInfo);
     uint8_t TransformJsToBc(const char *codePath, InstallRecord &record);
-
 };
 
 #define FREE_PRO_RESOURCE(fp, permissions, bundleInfo) \

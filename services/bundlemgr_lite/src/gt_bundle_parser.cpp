@@ -490,7 +490,8 @@ bool GtBundleParser::ConvertIconResToBundleInfo(const char *resPath, uint32_t ic
         return false;
     }
     char *pos = relativeIconPath + strlen(relativeIconPath);
-    for (; *pos != '/'; pos--) {};
+    for (; *pos != '/'; pos--) {
+    };
     *pos = '\0';
     char *bigIconPathComp[] = {
         bundleInfo->codePath, const_cast<char *>(ASSETS), relativeIconPath, const_cast<char *>(ICON_NAME)

@@ -15,14 +15,14 @@
 
 #include "gt_extractor_util.h"
 
-#include <limits.h>
+#include <climits>
 #include "appexecfwk_errors.h"
 #include "bundle_common.h"
 #include "bundle_util.h"
 #include "bundlems_log.h"
+#include "cstdio"
 #include "dirent.h"
 #include "fcntl.h"
-#include "stdio.h"
 #include "sys/stat.h"
 #include "unistd.h"
 #include "utils.h"

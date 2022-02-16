@@ -16,7 +16,6 @@
 #ifndef OHOS_BUNDLE_EXTRACTOR_H
 #define OHOS_BUNDLE_EXTRACTOR_H
 
-#include "stdint.h"
 #include <sstream>
 #include <string>
 

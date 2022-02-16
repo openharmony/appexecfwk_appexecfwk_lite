@@ -25,13 +25,13 @@ extern "C" {
 #include "appexecfwk_errors.h"
 #include "bundle_util.h"
 #include "bundlems_log.h"
+#include "cstdio"
 #include "dirent.h"
 #include "fcntl.h"
 #include "global.h"
 #include "gt_bundle_extractor.h"
 #include "gt_bundle_manager_service.h"
 #include "gt_bundle_parser.h"
-#include "stdio.h"
 #include "sys/stat.h"
 #include "unistd.h"
 #include "utils.h"
@@ -201,7 +201,8 @@ uint8_t GtBundleInstaller::Install(const char *path, InstallerCallback installer
     if (errorCode != ERR_OK) {
         return errorCode;
     }
-    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_SIXTH_FINISHED_PROCESS, installerCallback);
+    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING,
+        0, BMS_SIXTH_FINISHED_PROCESS, installerCallback);
 
     // rename bundle.json
     if (!RenameJsonFile(installRecord.bundleName, randStr)) {
@@ -234,10 +235,12 @@ uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *ra
         .bundleName = nullptr, .moduleDescriptionId = 0, .abilityRes = nullptr, .totalNumOfAbilityRes = 0
     };
     BundleInfo *bundleInfo = nullptr;
-    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_FIRST_FINISHED_PROCESS, installerCallback);
+    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0,
+        BMS_FIRST_FINISHED_PROCESS, installerCallback);
     uint8_t errorCode = PreCheckBundle(path, fp, signatureInfo, fileSize, bundleStyle);
     CHECK_PRO_RESULT(errorCode, fp, permissions, bundleInfo, signatureInfo);
-    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_SECOND_FINISHED_PROCESS, installerCallback);
+    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING,
+        0, BMS_SECOND_FINISHED_PROCESS, installerCallback);
 #ifdef __LITEOS_M__
     fp = open(path, O_RDONLY, S_IREAD);
     if (fp < 0) {
@@ -273,7 +276,8 @@ uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *ra
     errorCode = GtBundleExtractor::ExtractHap(tmpCodePath, installRecord.bundleName, fp, fileSize, bundleStyle);
     close(fp);
     CHECK_PRO_PART_ROLLBACK(errorCode, tmpCodePath, permissions, bundleInfo, signatureInfo);
-    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_THIRD_FINISHED_PROCESS, installerCallback);
+    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0,
+        BMS_THIRD_FINISHED_PROCESS, installerCallback);
     // get js engine version
 #ifdef BC_TRANS_ENABLE
     char *jsEngineVersion = get_jerry_version_no();
@@ -284,7 +288,8 @@ uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *ra
     errorCode = TransformJsToBc(tmpCodePath, installRecord);
     CHECK_PRO_PART_ROLLBACK(errorCode, tmpCodePath, permissions, bundleInfo, signatureInfo);
 #endif
-    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_FOURTH_FINISHED_PROCESS, installerCallback);
+    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0,
+        BMS_FOURTH_FINISHED_PROCESS, installerCallback);
     // rename install path and record install infomation
     bool isUpdate = GtManagerService::GetInstance().QueryBundleInfo(installRecord.bundleName) != nullptr;
     errorCode = HandleFileAndBackUpRecord(installRecord, tmpCodePath, randStr, bundleInfo->dataPath, isUpdate);
@@ -294,7 +299,8 @@ uint8_t GtBundleInstaller::ProcessBundleInstall(const char *path, const char *ra
     // move rawfile to data path when rawfile is exists
     errorCode = MoveRawFileToDataPath(bundleInfo);
     CHECK_PRO_ROLLBACK(errorCode, permissions, bundleInfo, signatureInfo, randStr);
-    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0, BMS_FIFTH_FINISHED_PROCESS, installerCallback);
+    (void) GtManagerService::GetInstance().ReportInstallCallback(OPERATION_DOING, 0,
+        BMS_FIFTH_FINISHED_PROCESS, installerCallback);
     // store permissions
     errorCode = StorePermissions(installRecord.bundleName, permissions.permissionTrans, permissions.permNum,
         isUpdate);
