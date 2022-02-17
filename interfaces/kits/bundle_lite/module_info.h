@@ -84,7 +84,7 @@ typedef struct {
     /** Whether the HAP package is installed while the user is installing the application */
     bool isDeliveryInstall;
 
-    /** 
+    /**
      * Pointer to the types of devices that can run the application. The maximum size of the device type array is
      * {@link DEVICE_TYPE_SIZE}.
      */

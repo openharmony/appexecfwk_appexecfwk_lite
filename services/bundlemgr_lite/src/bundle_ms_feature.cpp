@@ -121,7 +121,7 @@ BOOL BundleMsFeature::OnFeatureMessage(Feature *feature, Request *request)
     return TRUE;
 }
 
-void static InnerFreeDataBuff(void *ptr)
+static void InnerFreeDataBuff(void *ptr)
 {
     if (ptr != nullptr) {
         cJSON_free(ptr);

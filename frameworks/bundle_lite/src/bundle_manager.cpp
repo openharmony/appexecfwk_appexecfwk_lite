@@ -43,7 +43,7 @@ constexpr static uint8_t OBJECT_NUMBER_IN_INSTALLATION = 1;
 constexpr static uint8_t OBJECT_NUMBER_IN_INSTALLATION = 2;
 #endif
 
-int32 RegisterCallback(BundleStatusCallback *bundleStatusCallback)
+int32_t RegisterCallback(BundleStatusCallback *bundleStatusCallback)
 {
     if ((bundleStatusCallback == nullptr) || (bundleStatusCallback->callBack == nullptr)) {
         return ERR_APPEXECFWK_OBJECT_NULL;
@@ -57,7 +57,7 @@ int32 RegisterCallback(BundleStatusCallback *bundleStatusCallback)
         bundleStatusCallback->bundleName, bundleStatusCallback->data);
 }
 
-int32 UnregisterCallback()
+int32_t UnregisterCallback()
 {
     return OHOS::BundleCallback::GetInstance().UnregisterBundleStateCallback();
 }

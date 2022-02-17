@@ -26,13 +26,13 @@
 
 namespace OHOS {
 namespace {
-#define ZIPPOS_ADD_AND_CHECK_OVERFLOW(first, second, sum)                               \
-{                                                                                       \
-    if ((second > 0) && (first > (std::numeric_limits<ZipPos>::max() - second))) {      \
-        return false;                                                                   \
-    }                                                                                   \
-    sum = first + second;                                                               \
-}
+#define ZIPPOS_ADD_AND_CHECK_OVERFLOW(first, second, sum)                                   \
+    do {                                                                                    \
+        if ((second > 0) && (first > (std::numeric_limits<ZipPos>::max() - second))) {      \
+            return false;                                                                   \
+        }                                                                                   \
+        sum = first + second;                                                               \
+    } while (0)
 
 constexpr uint32_t MAX_FILE_NAME = 256;
 constexpr uint32_t UNZIP_BUFFER_SIZE = 1024;

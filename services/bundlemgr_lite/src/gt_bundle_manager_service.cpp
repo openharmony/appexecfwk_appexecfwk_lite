@@ -23,6 +23,7 @@
 #include "bundle_util.h"
 #include "bundlems_log.h"
 #include "cmsis_os2.h"
+#include "cstdio"
 #include "dirent.h"
 #include "fcntl.h"
 #include "gt_bundle_extractor.h"
@@ -30,7 +31,6 @@
 #include "gt_extractor_util.h"
 #include "jerryscript_adapter.h"
 #include "los_tick.h"
-#include "stdio.h"
 #include "sys/stat.h"
 #include "unistd.h"
 #include "utils.h"
@@ -100,7 +100,6 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
     uint8_t ret = GtBundleExtractor::ExtractInstallMsg(path, &(bundleInstallMsg_->bundleName),
         &(bundleInstallMsg_->label), &(bundleInstallMsg_->smallIconPath),
         &(bundleInstallMsg_->bigIconPath));
-
     if (ret != 0) {
         char *name = strchr(path, '/');
         bundleInstallMsg_->bundleName = Utils::Strdup(name + 1);

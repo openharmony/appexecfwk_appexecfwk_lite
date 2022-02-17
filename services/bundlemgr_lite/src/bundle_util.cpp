@@ -29,14 +29,14 @@
 #else
 #include "adapter.h"
 #include "bundlems_log.h"
+#include "cstdio"
 #include "dirent.h"
 #include "fcntl.h"
 #include "los_tick.h"
-#include "stdio.h"
 #include "sys/stat.h"
 #include "unistd.h"
 #endif
-#include <stdlib.h>
+#include <cstdlib>
 #include "utils.h"
 
 namespace OHOS {
@@ -201,7 +201,7 @@ uint32_t BundleUtil::GetFileFolderSize(const char *filePath)
 
     list->PushFront(Utils::Strdup(filePath));
     uint32_t fileFolderSize = 0;
-    while(!list->IsEmpty()) {
+    while (!list->IsEmpty()) {
         char *curPath = list->Front();
         if (curPath == nullptr) {
             break;
