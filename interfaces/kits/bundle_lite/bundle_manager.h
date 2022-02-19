@@ -94,7 +94,7 @@ int32_t RegisterCallback(BundleStatusCallback *BundleStatusCallback);
  * @since 1.0
  * @version 1.0
  */
-int32_t UnregisterCallback();
+int32_t UnregisterCallback(void);
 
 /**
  * @brief Installs or updates an application.

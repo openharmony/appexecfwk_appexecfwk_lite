@@ -32,8 +32,8 @@
 #define AdapterMalloc(a) malloc(a)
 #define AdapterFree(a) \
     do { \
-        if (a != nullptr) { \
-            (void) free((void *)a); \
+        if ((a) != nullptr) { \
+            (void) free((void *)(a)); \
             a = nullptr; \
         } \
     } while (0)

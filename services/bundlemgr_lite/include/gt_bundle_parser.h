@@ -56,21 +56,21 @@ private:
 
 #define CHECK_NULL(object, errorCode)          \
     do {                                       \
-        if (object == nullptr) {               \
+        if ((object) == nullptr) {               \
             return errorCode;                  \
         }                                      \
     } while (0)
 
 #define CHECK_LENGTH(length, maxLength, errorCode)           \
     do {                                                     \
-        if (length > maxLength) {                            \
+        if ((length) > (maxLength)) {                            \
             return errorCode;                                \
         }                                                    \
     } while (0)
 
 #define CHECK_IS_TRUE(result, errorCode)     \
     do {                                     \
-        if (!result) {                       \
+        if (!(result)) {                       \
             return errorCode;                \
         }                                    \
     } while (0)
@@ -78,20 +78,20 @@ private:
 #define FREE_BUNDLE_PROFILE(bundleProfile)                           \
     do {                                                             \
         for (int32_t i = 0; i < METADATA_SIZE; i++) {                \
-            AdapterFree(bundleProfile.moduleInfo.metaData[i]);       \
+            AdapterFree((bundleProfile).moduleInfo.metaData[i]);       \
         }                                                            \
     } while (0)
 
 #define FREE_BUNDLE_RES(bundleRes)                          \
     do {                                                    \
-        if (bundleRes.abilityRes != nullptr) {              \
-            AdapterFree(bundleRes.abilityRes);              \
+        if ((bundleRes).abilityRes != nullptr) {              \
+            AdapterFree((bundleRes).abilityRes);              \
         }                                                   \
     } while (0)
 
 #define CHECK_PARSE_RESULT(errorCode, object, bundleProfile, bundleRes)   \
     do {                                                                  \
-        if (errorCode != ERR_OK) {                                        \
+        if ((errorCode) != ERR_OK) {                                        \
             FREE_BUNDLE_PROFILE(bundleProfile);                           \
             FREE_BUNDLE_RES(bundleRes);                                   \
             cJSON_Delete(object);                                         \
