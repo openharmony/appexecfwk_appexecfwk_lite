@@ -70,9 +70,9 @@ private:
 
 #define CHECK_PRO_RESULT(errcode, bundleInfo, permissions, abilityRes)       \
     do {                                                                     \
-        if (errcode != ERR_OK) {                                             \
+        if ((errcode) != ERR_OK) {                                             \
             BundleInfoUtils::FreeBundleInfo(bundleInfo);                     \
-            AdapterFree(permissions.permissionTrans);                        \
+            AdapterFree((permissions).permissionTrans);                        \
             AdapterFree(abilityRes);                                         \
             return errcode;                                                  \
         }                                                                    \
@@ -80,19 +80,19 @@ private:
 
 #define CLEAR_INSTALL_ENV(bundleInfo)                                        \
     do {                                                                     \
-        if (bundleInfo != nullptr) {                                         \
+        if ((bundleInfo) != nullptr) {                                         \
             BundleDaemonClient::GetInstance().RemoveInstallDirectory(        \
-                bundleInfo->codePath, bundleInfo->dataPath, false);          \
+                (bundleInfo)->codePath, (bundleInfo)->dataPath, false);          \
             BundleInfoUtils::FreeBundleInfo(bundleInfo);                     \
         }                                                                    \
     } while (0)
 
 #define CHECK_PRO_PART_ROLLBACK(errcode, path, permissions, bundleInfo, abilityRes)      \
     do {                                                                                 \
-        if (errcode != ERR_OK && bundleInfo != nullptr) {                                \
-            BundleDaemonClient::GetInstance().RemoveFile(path.c_str());                  \
+        if ((errcode) != ERR_OK && (bundleInfo) != nullptr) {                                \
+            BundleDaemonClient::GetInstance().RemoveFile((path).c_str());                  \
             BundleInfoUtils::FreeBundleInfo(bundleInfo);                                 \
-            AdapterFree(permissions.permissionTrans);                                    \
+            AdapterFree((permissions).permissionTrans);                                    \
             AdapterFree(abilityRes);                                                     \
             return errcode;                                                              \
         }                                                                                \
@@ -100,11 +100,11 @@ private:
 
 #define CHECK_PRO_ROLLBACK(errcode, permissions, bundleInfo, abilityRes, randStr)        \
     do {                                                                                 \
-        if (errcode != ERR_OK && bundleInfo != nullptr) {                                \
-            AdapterFree(permissions.permissionTrans);                                    \
+        if ((errcode) != ERR_OK && (bundleInfo) != nullptr) {                                \
+            AdapterFree((permissions).permissionTrans);                                    \
             AdapterFree(abilityRes);                                                     \
-            ManagerService::GetInstance().RemoveBundleInfo(bundleInfo->bundleName);      \
-            BundleUtil::DeleteJsonFile(bundleInfo->bundleName, randStr);                 \
+            ManagerService::GetInstance().RemoveBundleInfo((bundleInfo)->bundleName);      \
+            BundleUtil::DeleteJsonFile((bundleInfo)->bundleName, randStr);                 \
             CLEAR_INSTALL_ENV(bundleInfo);                                               \
             return errcode;                                                              \
         }                                                                                \

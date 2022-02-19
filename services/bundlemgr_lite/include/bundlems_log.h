@@ -64,7 +64,7 @@ namespace OHOS {
 
 #define CHECK_NULLPTR_RETURN_PTR(point, name, fmt)            \
     do {                                                      \
-        if (point == nullptr) {                               \
+        if ((point) == nullptr) {                               \
             PRINTE(name, fmt);                                \
             return nullptr;                                   \
         }                                                     \
@@ -72,7 +72,7 @@ namespace OHOS {
 
 #define CHECK_NULLPTR_RETURN(point, name, fmt)            \
     do {                                                  \
-        if (point == nullptr) {                           \
+        if ((point) == nullptr) {                           \
             PRINTE(name, fmt);                            \
             return;                                       \
         }                                                 \
@@ -80,7 +80,7 @@ namespace OHOS {
 
 #define CHECK_NULLPTR_RETURN_CODE(point, name, fmt, code) \
     do {                                                  \
-        if (point == nullptr) {                           \
+        if ((point) == nullptr) {                           \
             PRINTE(name, fmt);                            \
             return code;                                  \
         }                                                 \

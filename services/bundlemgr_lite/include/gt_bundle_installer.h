@@ -69,23 +69,23 @@ private:
 
 #define FREE_PRO_RESOURCE(fp, permissions, bundleInfo) \
     do {                                               \
-        if (fp >= 0) {                                 \
+        if ((fp) >= 0) {                                 \
             close(fp);                                 \
         }                                              \
         BundleInfoUtils::FreeBundleInfo(bundleInfo);   \
-        UI_Free(permissions.permissionTrans);          \
+        UI_Free((permissions).permissionTrans);          \
     } while (0)
 
 #define FREE_SIGNATUREINFO(signatureInfo)                                                           \
     do {                                                                                            \
-        AdapterFree(signatureInfo.appId);                                                           \
+        AdapterFree((signatureInfo).appId);                                                           \
         AdapterFree(signatureInfo.bundleName);                                                      \
         BundleUtil::FreeStrArrayMemory(signatureInfo.restricPermission, signatureInfo.restricNum);  \
     } while (0)
 
 #define CHECK_PRO_RESULT(errcode, fp, permissions, bundleInfo, signatureInfo)  \
     do {                                                                       \
-        if (errcode != ERR_OK) {                                               \
+        if ((errcode) != ERR_OK) {                                               \
             FREE_PRO_RESOURCE(fp, permissions, bundleInfo);                    \
             FREE_SIGNATUREINFO(signatureInfo);                                 \
             return errcode;                                                    \
@@ -94,7 +94,7 @@ private:
 
 #define CLEAR_INSTALL_ENV(bundleInfo)                                        \
     do {                                                                     \
-        if (bundleInfo != nullptr) {                                         \
+        if ((bundleInfo) != nullptr) {                                         \
             BundleUtil::RemoveDir(bundleInfo->codePath);                     \
             BundleUtil::RemoveDir(bundleInfo->dataPath);                     \
             BundleInfoUtils::FreeBundleInfo(bundleInfo);                     \
@@ -103,21 +103,21 @@ private:
 
 #define CHECK_PRO_PART_ROLLBACK(errcode, path, permissions, bundleInfo, signatureInfo)   \
     do {                                                                                 \
-        if (errcode != ERR_OK) {                                                         \
+        if ((errcode) != ERR_OK) {                                                         \
             BundleUtil::RemoveDir(path);                                                 \
             AdapterFree(path);                                                           \
             BundleInfoUtils::FreeBundleInfo(bundleInfo);                                 \
             FREE_SIGNATUREINFO(signatureInfo);                                           \
-            UI_Free(permissions.permissionTrans);                                        \
+            UI_Free((permissions).permissionTrans);                                        \
             return errcode;                                                              \
         }                                                                                \
     } while (0)
 
 #define CHECK_PRO_ROLLBACK(errcode, permissions, bundleInfo, signatureInfo, randStr)  \
     do {                                                                              \
-        if (errcode != ERR_OK && bundleInfo != nullptr) {                             \
+        if ((errcode) != ERR_OK && (bundleInfo) != nullptr) {                             \
             FREE_SIGNATUREINFO(signatureInfo);                                        \
-            UI_Free(permissions.permissionTrans);                                     \
+            UI_Free((permissions).permissionTrans);                                     \
             GtManagerService::GetInstance().RemoveBundleInfo(bundleInfo->bundleName); \
             BundleUtil::DeleteJsonFile(bundleInfo->bundleName, randStr);              \
             CLEAR_INSTALL_ENV(bundleInfo);                                            \

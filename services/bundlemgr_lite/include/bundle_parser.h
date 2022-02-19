@@ -71,14 +71,14 @@ private:
 
 #define CHECK_NULL(object, errorCode)          \
     do {                                       \
-        if (object == nullptr) {               \
+        if ((object) == nullptr) {               \
             return errorCode;                  \
         }                                      \
     } while (0)
 
 #define CHECK_LENGTH(length, maxLength, errorCode)           \
     do {                                                     \
-        if (length > maxLength) {                            \
+        if ((length) > (maxLength)) {                            \
             return errorCode;                                \
         }                                                    \
     } while (0)
@@ -92,7 +92,7 @@ private:
 
 #define CHECK_PARSE_RESULT(errorCode, object, bundleProfile) \
     do {                                                     \
-        if (errorCode != ERR_OK) {                           \
+        if ((errorCode) != ERR_OK) {                           \
             FREE_BUNDLE_PROFILE(bundleProfile);              \
             cJSON_Delete(object);                            \
             return errorCode;                                \
@@ -101,9 +101,9 @@ private:
 
 #define FREE_BUNDLE_PROFILE(bundleProfile)                      \
     do {                                                        \
-        AdapterFree(bundleProfile.abilityInfos);                \
+        AdapterFree((bundleProfile).abilityInfos);                \
         for (uint8_t i = 0; i < METADATA_SIZE; i++) {           \
-            AdapterFree(bundleProfile.moduleInfo.metaData[i]);  \
+            AdapterFree((bundleProfile).moduleInfo.metaData[i]);  \
         }                                                       \
     } while (0)
 } // namespace OHOS

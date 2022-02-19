@@ -28,10 +28,10 @@ namespace OHOS {
 namespace {
 #define ZIPPOS_ADD_AND_CHECK_OVERFLOW(first, second, sum)                                   \
     do {                                                                                    \
-        if ((second > 0) && (first > (std::numeric_limits<ZipPos>::max() - second))) {      \
+        if (((second) > 0) && ((first) > (std::numeric_limits<ZipPos>::max() - (second)))) {      \
             return false;                                                                   \
         }                                                                                   \
-        sum = first + second;                                                               \
+        (sum) = (first) + (second);                                                               \
     } while (0)
 
 constexpr uint32_t MAX_FILE_NAME = 256;
