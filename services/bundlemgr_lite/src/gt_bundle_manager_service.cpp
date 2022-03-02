@@ -14,7 +14,6 @@
  */
 
 #include "gt_bundle_manager_service.h"
-
 #include "ability_info_utils.h"
 #include "ability_message_id.h"
 #include "appexecfwk_errors.h"
@@ -35,8 +34,6 @@
 #include "unistd.h"
 #include "utils.h"
 #include "want.h"
-
-using namespace OHOS::ACELite;
 
 namespace OHOS {
 const uint8_t OPERATION_DOING = 200;
