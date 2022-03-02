@@ -75,7 +75,8 @@ const unsigned int RETRY_TIMES = 10;
             a = nullptr; \
         } \
     } while (0)
-
+#define APP_ERRCODE_EXTRA(code1, code2)
+#define APP_EVENT(code1)
 #define RecordAbiityInfoEvt(code1)
 #define MutexDelete(a) osMutexDelete(a)
 #define MutexAcquire(a, b) osMutexAcquire(a, b)
