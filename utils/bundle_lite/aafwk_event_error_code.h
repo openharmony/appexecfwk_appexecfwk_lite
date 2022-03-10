@@ -13,46 +13,30 @@
  * limitations under the License.
  */
 
-#ifndef UTILS_BUNDLE_LITE_AAFWK_EVENT_ERROR_CODE_H
-#define UTILS_BUNDLE_LITE_AAFWK_EVENT_ERROR_CODE_H
-
 #include "memory_heap.h"
-#include "product_adapter.h"
-#include "aafwk_event_error_id.h"
+#include "aafwk_event_error__id.h"
+
+using namespace OHOS::ACELite;
 
 namespace OHOS {
-namespace ACELite {
 #define APP_EVENT(code1) \
     AafwkEventCodePrint::GetInstance()->AafwkEventPrint(code1, 0)
 #define APP_ERRCODE_EXTRA(code1, code2) \
     AafwkEventCodePrint::GetInstance()->AafwkErrorPrint(code1, code2)
- 
+
 class AafwkEventCodePrint final : public MemoryHeap {
 public:
+    
     AafwkEventCodePrint() = default;
+
     ~AafwkEventCodePrint() = default;
 
-    static AafwkEventCodePrint *GetInstance()
-    {
-        static AafwkEventCodePrint printInstance;
-        return &printInstance;
-    }
+    static AafwkEventCodePrint *GetInstance();
 
-    void AafwkEventPrint(uint8_t info2, uint8_t info3)
-    {
-        ProductAdapter::PrintEventTrace(0, info2, info3);
-    }
+    void AafwkEventPrint(uint8_t info2, uint8_t info3);
 
-    void AafwkEventPrint(uint8_t info1, uint8_t info2, uint8_t info3)
-    {
-        ProductAdapter::PrintEventTrace(info1, info2, info3);
-    }
+    void AafwkEventPrint(uint8_t info1, uint8_t info2, uint8_t info3);
 
-    void AafwkErrorPrint(uint8_t info1, uint16_t info2)
-    {
-        ProductAdapter::PrintErrCode(info1, info2);
-    }
+    void AafwkErrorPrint(uint8_t info2, uint16_t info3);
 };
 }
-}
-#endif
