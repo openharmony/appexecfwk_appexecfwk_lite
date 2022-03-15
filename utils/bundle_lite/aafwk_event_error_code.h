@@ -12,11 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef UTILS_BUNDLE_LITE_AAFWK_EVENT_ERROR_ID_H
 #define UTILS_BUNDLE_LITE_AAFWK_EVENT_ERROR_ID_H
 
 #include "memory_heap.h"
 #include "aafwk_event_error_id.h"
+
+using namespace OHOS::ACELite;
 
 namespace OHOS {
 #define APP_EVENT(code1) \
