@@ -16,8 +16,6 @@
 #ifndef UTILS_BUNDLE_LITE_AAFWK_EVENT_ERROR_ID_H
 #define UTILS_BUNDLE_LITE_AAFWK_EVENT_ERROR_ID_H
 
-using namespace OHOS::ACELite;
-
 namespace OHOS {
 //  event codes
 enum {
