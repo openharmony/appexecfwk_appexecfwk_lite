@@ -19,8 +19,6 @@
 #include "memory_heap.h"
 #include "aafwk_event_error_id.h"
 
-using namespace OHOS::ACELite;
-
 namespace OHOS {
 #define APP_EVENT(code1) \
     AafwkEventCodePrint::GetInstance()->AafwkEventPrint(code1, 0)
