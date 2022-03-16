@@ -13,20 +13,17 @@
  * limitations under the License.
  */
 
-#ifndef UTILS_BUNDLE_LITE_AAFWK_EVENT_ERROR_ID_H
-#define UTILS_BUNDLE_LITE_AAFWK_EVENT_ERROR_ID_H
-
 #include "memory_heap.h"
 #include "aafwk_event_error_id.h"
 
 using namespace OHOS::ACELite;
 
-namespace OHOS {
 #define APP_EVENT(code1) \
     AafwkEventCodePrint::GetInstance()->AafwkEventPrint(code1, 0)
 #define APP_ERRCODE_EXTRA(code1, code2) \
     AafwkEventCodePrint::GetInstance()->AafwkErrorPrint(code1, code2)
 
+namespace OHOS {
 class AafwkEventCodePrint final : public MemoryHeap {
 public:
     
@@ -43,4 +40,3 @@ public:
     void AafwkErrorPrint(uint8_t info2, uint16_t info3);
 };
 }
-#endif

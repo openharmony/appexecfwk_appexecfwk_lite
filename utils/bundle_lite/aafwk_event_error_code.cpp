@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 #include "aafwk_event_error_code.h"
 #include "product_adapter.h"
 
