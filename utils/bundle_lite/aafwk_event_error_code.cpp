@@ -17,23 +17,23 @@
 #include "aafwk_product_adapter.h"
 
 namespace OHOS {
-AafwkEventCodePrint *AafwkEventCodePrint::GetInstance()
+AafwkEventErrorCode *AafwkEventErrorCode::GetInstance()
 {
-    static AafwkEventCodePrint printInstance;
+    static AafwkEventErrorCode printInstance;
     return &printInstance;
 }
 
-void AafwkEventCodePrint::AafwkEventPrint(uint8_t info2, uint8_t info3)
+void AafwkEventErrorCode::AafwkEventPrint(uint8_t info2, uint8_t info3)
 {
     AafwkProductAdapter::PrintEventTrace(0, info2, info3);
 }
 
-void AafwkEventCodePrint::AafwkEventPrint(uint8_t info1, uint8_t info2, uint8_t info3)
+void AafwkEventErrorCode::AafwkEventPrint(uint8_t info1, uint8_t info2, uint8_t info3)
 {
     AafwkProductAdapter::PrintEventTrace(info1, info2, info3);
 }
 
-void AafwkEventCodePrint::AafwkErrorPrint(uint8_t info1, uint16_t info2)
+void AafwkEventErrorCode::AafwkErrorPrint(uint8_t info1, uint16_t info2)
 {
     AafwkProductAdapter::PrintErrCode(info1, info2);
 }

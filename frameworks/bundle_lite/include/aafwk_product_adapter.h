@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef AAFWK_PRODUCT_ADAPTER_H #define AAFWK_PRODUCT_ADAPTER_H
+#define AAFWK_PRODUCT_ADAPTER_H #define AAFWK_PRODUCT_ADAPTER_H
 
 #include <cstdint>
 
@@ -43,3 +45,4 @@ public:
     static void PrintErrCode(uint8_t info2, uint16_t rfu);
 };
 } // namespace OHOS
+#endif

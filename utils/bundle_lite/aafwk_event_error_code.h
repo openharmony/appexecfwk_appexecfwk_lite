@@ -18,18 +18,18 @@
 
 namespace OHOS {
 #define APP_EVENT(code1) \
-    AafwkEventCodePrint::GetInstance()->AafwkEventPrint(code1, 0)
+    AafwkEventErrorCode::GetInstance()->AafwkEventPrint(code1, 0)
 #define APP_ERRCODE_EXTRA(code1, code2) \
-    AafwkEventCodePrint::GetInstance()->AafwkErrorPrint(code1, code2)
+    AafwkEventErrorCode::GetInstance()->AafwkErrorPrint(code1, code2)
 
-class AafwkEventCodePrint {
+class AafwkEventErrorCode {
 public:
     
-    AafwkEventCodePrint() = default;
+    AafwkEventErrorCode() = default;
 
-    ~AafwkEventCodePrint() = default;
+    ~AafwkEventErrorCode() = default;
 
-    static AafwkEventCodePrint *GetInstance();
+    static AafwkEventErrorCode *GetInstance();
 
     void AafwkEventPrint(uint8_t info2, uint8_t info3);
 
