@@ -12,26 +12,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 #include "memory_heap.h"
 #include "aafwk_event_error_id.h"
 
-using namespace OHOS::ACELite;
-
-#define APP_EVENT(code1) \
-    AafwkEventCodePrint::GetInstance()->AafwkEventPrint(code1, 0)
-#define APP_ERRCODE_EXTRA(code1, code2) \
-    AafwkEventCodePrint::GetInstance()->AafwkErrorPrint(code1, code2)
-
 namespace OHOS {
-class AafwkEventCodePrint final : public MemoryHeap {
+#define APP_EVENT(code1) \
+    AafwkEventErrorCode::GetInstance()->AafwkEventPrint(code1, 0)
+#define APP_ERRCODE_EXTRA(code1, code2) \
+    AafwkEventErrorCode::GetInstance()->AafwkErrorPrint(code1, code2)
+
+class AafwkEventErrorCode {
 public:
     
-    AafwkEventCodePrint() = default;
+    AafwkEventErrorCode() = default;
 
-    ~AafwkEventCodePrint() = default;
+    ~AafwkEventErrorCode() = default;
 
-    static AafwkEventCodePrint *GetInstance();
+    static AafwkEventErrorCode *GetInstance();
 
     void AafwkEventPrint(uint8_t info2, uint8_t info3);
 
