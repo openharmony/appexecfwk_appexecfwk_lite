@@ -14,11 +14,10 @@
  */
 
 #include "aafwk_event_error_code.h"
-#include "product_adapter.h"
-
-using namespace OHOS::ACELite;
+#include "aafwk_product_adapter.h"
 
 namespace OHOS {
+
 AafwkEventCodePrint *AafwkEventCodePrint::GetInstance()
 {
     static AafwkEventCodePrint printInstance;
@@ -27,16 +26,16 @@ AafwkEventCodePrint *AafwkEventCodePrint::GetInstance()
 
 void AafwkEventCodePrint::AafwkEventPrint(uint8_t info2, uint8_t info3)
 {
-    ProductAdapter::PrintEventTrace(0, info2, info3);
+    AafwkProductAdapter::PrintEventTrace(0, info2, info3);
 }
 
 void AafwkEventCodePrint::AafwkEventPrint(uint8_t info1, uint8_t info2, uint8_t info3)
 {
-    ProductAdapter::PrintEventTrace(info1, info2, info3);
+    AafwkProductAdapter::PrintEventTrace(info1, info2, info3);
 }
 
 void AafwkEventCodePrint::AafwkErrorPrint(uint8_t info1, uint16_t info2)
 {
-    ProductAdapter::PrintErrCode(info1, info2);
+    AafwkProductAdapter::PrintErrCode(info1, info2);
 }
 } // namespace OHOS

@@ -14,7 +14,8 @@
  */
 
 #include "gt_bundle_manager_service.h"
-
+#include "aafwk_event_error_id.h"
+#include "aafwk_event_error_code.h"
 #include "ability_info_utils.h"
 #include "ability_message_id.h"
 #include "appexecfwk_errors.h"
