@@ -17,7 +17,6 @@
 #include "aafwk_product_adapter.h"
 
 namespace OHOS {
-
 AafwkEventCodePrint *AafwkEventCodePrint::GetInstance()
 {
     static AafwkEventCodePrint printInstance;

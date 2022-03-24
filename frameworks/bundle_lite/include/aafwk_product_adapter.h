@@ -41,6 +41,5 @@ public:
     // wrapper functions, for aafwk internal calling
     static void PrintEventTrace(uint8_t info2, uint8_t info3, uint8_t info4);
     static void PrintErrCode(uint8_t info2, uint16_t rfu);
-
 };
 } // namespace OHOS
