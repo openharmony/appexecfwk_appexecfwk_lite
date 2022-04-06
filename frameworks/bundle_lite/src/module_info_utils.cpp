@@ -41,10 +41,20 @@ void ModuleInfoUtils::ClearModuleInfoMetaData(MetaData **metaData, uint32_t numO
     }
     for (uint32_t i = 0; i < numOfMetaData; i++) {
         if (metaData[i] != nullptr) {
-            AdapterFree(metaData[i]->name);
-            AdapterFree(metaData[i]->value);
-            AdapterFree(metaData[i]->extra);
+            if (metaData[i]->name != nullptr) {
+                AdapterFree(metaData[i]->name);
+                metaData[i]->name = nullptr;
+            }
+            if (metaData[i]->value != nullptr) {
+                AdapterFree(metaData[i]->value);
+                metaData[i]->value = nullptr;
+            }
+            if (metaData[i]->extra != nullptr) {
+                AdapterFree(metaData[i]->extra);
+                metaData[i]->extra = nullptr;
+            }
             AdapterFree(metaData[i]);
+            metaData[i] = nullptr;
         }
     }
 }

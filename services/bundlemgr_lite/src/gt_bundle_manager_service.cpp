@@ -307,7 +307,9 @@ void GtManagerService::InstallPreBundle(List<ToBeInstalledApp *> systemPathList,
     }
 
     // scan third apps
+    DisableServiceWdg();
     ScanThirdApp(INSTALL_PATH, &systemPathList_);
+    EnableServiceWdg();
     for (auto node = systemPathList.Begin(); node != systemPathList.End(); node = node->next_) {
         ToBeInstalledApp *toBeInstalledApp = node->value_;
         if (!BundleUtil::IsFile(toBeInstalledApp->path) ||
