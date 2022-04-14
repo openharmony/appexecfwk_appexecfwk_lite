@@ -90,10 +90,12 @@ bool GtManagerService::Install(const char *hapPath, const InstallParam *installP
     // create new bundleInstallMsg
     bundleInstallMsg_ = reinterpret_cast<BundleInstallMsg *>(AdapterMalloc(sizeof(BundleInstallMsg)));
     if (bundleInstallMsg_ == nullptr) {
+        AdapterFree(path);
         return false;
     }
     if (memset_s(bundleInstallMsg_, sizeof(BundleInstallMsg), 0, sizeof(BundleInstallMsg)) != EOK) {
         AdapterFree(bundleInstallMsg_);
+        AdapterFree(path);
         return false;
     }
     // set bundleName、label、smallIconPath、bigIconPath in bundleInstallMsg_
@@ -310,6 +312,7 @@ void GtManagerService::InstallAllSystemBundle(InstallerCallback installerCallbac
 
         if (!BundleUtil::IsFile(((AppInfoList *)currentNode)->filePath) ||
             !BundleUtil::EndWith(((AppInfoList *)currentNode)->filePath, INSTALL_FILE_SUFFIX)) {
+            GtManagerService::APP_FreeAllAppInfo(list);
             return;
         }
         (void) Install(((AppInfoList *)currentNode)->filePath, nullptr, installerCallback);
