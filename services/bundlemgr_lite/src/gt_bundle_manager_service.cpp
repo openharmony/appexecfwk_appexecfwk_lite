@@ -307,9 +307,7 @@ void GtManagerService::InstallPreBundle(List<ToBeInstalledApp *> systemPathList,
     }
 
     // scan third apps
-    DisableServiceWdg();
     ScanThirdApp(INSTALL_PATH, &systemPathList_);
-    EnableServiceWdg();
     for (auto node = systemPathList.Begin(); node != systemPathList.End(); node = node->next_) {
         ToBeInstalledApp *toBeInstalledApp = node->value_;
         if (!BundleUtil::IsFile(toBeInstalledApp->path) ||
@@ -1001,6 +999,9 @@ void GtManagerService::QueryPreAppInfo(const char *appDir, PreAppList *list)
         return;
     }
     char *fileName = reinterpret_cast<char *>(AdapterMalloc(MAX_NAME_LEN + 1));
+    if (fileName == nullptr) {
+        return;
+    }
     while ((ent = readdir(dir)) != nullptr) {
         if (memset_s(fileName, MAX_NAME_LEN + 1, 0, MAX_NAME_LEN + 1) != EOK) {
             break;
