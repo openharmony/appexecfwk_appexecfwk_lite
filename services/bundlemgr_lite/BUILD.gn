@@ -33,7 +33,7 @@ if (ohos_kernel_type == "liteos_m") {
     deps = [
       "${appexecfwk_lite_path}/frameworks/bundle_lite:bundle",
       "//base/hiviewdfx/hilog_lite/frameworks/featured:hilog_static",
-      "//foundation/ace/ace_engine_lite/frameworks:ace_lite",
+      "//foundation/arkui/ace_engine_lite/frameworks:ace_lite",
       "//foundation/distributedschedule/samgr_lite/samgr:samgr",
     ]
 

@@ -18,8 +18,8 @@ static_library("capability_api_simulator") {
   cflags += [ "-Wall" ]
   cflags_cc = cflags
   include_dirs = [
-    "//foundation/ace/ace_engine_lite/interfaces/innerkits/builtin/base",
-    "//foundation/ace/ace_engine_lite/interfaces/innerkits/builtin/jsi",
+    "//foundation/arkui/ace_engine_lite/interfaces/inner_api/builtin/base",
+    "//foundation/arkui/ace_engine_lite/interfaces/inner_api/builtin/jsi",
     "${appexecfwk_lite_path}/interfaces/kits/bundle_lite/js/builtin/include",
     "//foundation/communication/ipc_lite/interfaces/kits",
     "${aafwk_lite_path}/interfaces/kits/want_lite",
@@ -36,8 +36,8 @@ shared_library("capability_api") {
   cflags += [ "-Wall" ]
   cflags_cc = cflags
   include_dirs = [
-    "//foundation/ace/ace_engine_lite/interfaces/innerkits/builtin/base",
-    "//foundation/ace/ace_engine_lite/interfaces/innerkits/builtin/jsi",
+    "//foundation/arkui/ace_engine_lite/interfaces/inner_api/builtin/base",
+    "//foundation/arkui/ace_engine_lite/interfaces/inner_api/builtin/jsi",
     "${appexecfwk_lite_path}/interfaces/kits/bundle_lite/js/builtin/include",
     "//foundation/communication/ipc_lite/interfaces/kits",
     "${aafwk_lite_path}/interfaces/kits/want_lite",
