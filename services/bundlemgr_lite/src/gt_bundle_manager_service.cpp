@@ -995,9 +995,6 @@ void GtManagerService::APP_QueryAppInfo(const char *appDir, AppInfoList *list)
         return;
     }
     char *fileName = reinterpret_cast<char *>(AdapterMalloc(MAX_NAME_LEN + 1));
-    if (fileName == nullptr) {
-        return;
-    }
     while ((ent = readdir(dir)) != nullptr) {
         if (memset_s(fileName, MAX_NAME_LEN + 1, 0, MAX_NAME_LEN + 1) != EOK) {
             break;

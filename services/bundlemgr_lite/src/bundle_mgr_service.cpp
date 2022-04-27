@@ -88,7 +88,7 @@ BOOL BundleMgrService::ServiceMessageHandle(Service *service, Request *request)
             g_bmsbuff->bundleInstallerCallback);
     } else if (request->msgId == BMS_SCAN_PACKAGE_MSG) {
         OHOS::GtManagerService::GetInstance().ScanPackages();
-    } else if (request->msgId == BMS_REGISTER_CALLBACK_MSG) {
+    } else if (request->msgId == BMS_REGISTER_CALLBACK_MSG && g_bmsbuff != nullptr) {
         OHOS::GtManagerService::GetInstance().RegisterInstallerCallback(g_bmsbuff->bundleInstallerCallback);
     } else {
         return FALSE;
