@@ -29,10 +29,11 @@
 #include "bundle_manager.h"
 #include "convert_utils.h"
 #include "iproxy_client.h"
-#include "liteipc_adapter.h"
+#include "ipc_skeleton.h"
 #include "parameter.h"
 #include "samgr_lite.h"
 #include "securec.h"
+#include "rpc_errno.h"
 
 using namespace std;
 
@@ -157,9 +158,8 @@ static void ReceiveCallback(const uint8_t resultCode, const void *resultMessage)
     sem_post(&g_sem);
 }
 
-static int32 BmToolDeathNotify(const IpcContext* context, void *ipcMsg, IpcIo *data, void *arg)
+static void BmToolDeathNotify(void *arg)
 {
-    FreeBuffer(nullptr, ipcMsg);
     printf("error message: %s\n", "Bundle Manager Service is dead");
     exit(-1);
 }
@@ -193,7 +193,7 @@ void CommandParser::RunAsInstallCommand(int32_t argc, char *argv[]) const
                     printf("error message: %s\n", ERROR_INSTALL_PATH.c_str());
                     return;
                 }
-                if (RegisterDeathCallback(nullptr, sid, BmToolDeathNotify, nullptr, &cbId) != LITEIPC_OK) {
+                if (AddDeathRecipient(sid, BmToolDeathNotify, nullptr, &cbId) != ERR_NONE) {
                     printf("error message: %s\n", "death callback is registered unsuccessfully");
                     return;
                 }
@@ -227,7 +227,7 @@ void CommandParser::RunAsUninstallCommand(int32_t argc, char *argv[]) const
                     printf("error message: %s\n", ERROR_SEM_ERROR.c_str());
                     return;
                 }
-                if (RegisterDeathCallback(nullptr, sid, BmToolDeathNotify, nullptr, &cbId) != LITEIPC_OK) {
+                if (AddDeathRecipient(sid, BmToolDeathNotify, nullptr, &cbId) != ERR_NONE) {
                     printf("error message: %s\n", "death callback is registered unsuccessfully");
                     return;
                 }
@@ -429,12 +429,14 @@ static int BmsToolNotify(IOwner owner, int code, IpcIo *reply)
         printf("%s\n", "Bm tool Notify ipc is nullptr");
         return OHOS_FAILURE;
     }
-    switch (IpcIoPopUint8(reply)) {
+    uint8_t readCode;
+    ReadUint8(reply, &readCode);
+    switch (readCode) {
         case SET_EXTERNAL_INSTALL_MODE:
         case SET_SIGN_DEBUG_MODE:
         case SET_SIGN_MODE: {
             uint8_t *ret = reinterpret_cast<uint8_t *>(owner);
-            *ret = IpcIoPopUint8(reply);
+            ReadUint8(reply, ret);
             break;
         }
         default: {
@@ -451,13 +453,9 @@ uint8_t SetMode(int32_t mode, bool enable)
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
     IpcIo ipcIo;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, 0);
-    IpcIoPushBool(&ipcIo, enable);
-    if (!IpcIoAvailable(&ipcIo)) {
-        printf("%s\n", "Bm tool ipc failed");
-        return ERR_APPEXECFWK_SERIALIZATION_FAILED;
-    }
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&ipcIo, data, MAX_IO_SIZE, 0);
+    WriteBool(&ipcIo, enable);
     uint8_t setModeResult = 0;
     int32_t ret = g_bmsInnerClient->Invoke(g_bmsInnerClient, mode, &ipcIo, &setModeResult, BmsToolNotify);
     if (ret != ERR_OK) {

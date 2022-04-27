@@ -22,7 +22,7 @@
 #include "bundle_manager_service.h"
 #include "bundle_message_id.h"
 #include "convert_utils.h"
-#include "liteipc_adapter.h"
+#include "ipc_skeleton.h"
 #include "log.h"
 #include "message.h"
 #include "ohos_init.h"
@@ -113,42 +113,20 @@ uint8_t BundleInnerFeature::InstallInnerBundle(const uint8_t funcId, IpcIo *req,
         HILOG_ERROR(HILOG_MODULE_APP, "BundleMS InstallInnerBundle, request or reply is null");
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
-#ifdef __LINUX__
     size_t length = 0;
-    char *reqPath = reinterpret_cast<char *>(IpcIoPopString(req, &length));
-#else
-    BuffPtr *buff = IpcIoPopDataBuff(req);
-    if (buff == nullptr) {
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleMS inner feature deserialize req data failed");
-        return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
-    }
-    char *reqPath = reinterpret_cast<char *>(buff->buff);
-    if ((reqPath == nullptr) || (buff->buffSz == 0)) {
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleMS inner feature deserialize install path failed");
-        return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
-    }
-#endif
-    SvcIdentity *svc = IpcIoPopSvc(req);
-    if (svc == nullptr) {
+    char *reqPath = reinterpret_cast<char *>(ReadString(req, &length));
+    SvcIdentity svc;
+    if (!(ReadRemoteObject(req, &svc))) {
         HILOG_ERROR(HILOG_MODULE_APP, "BundleMS inner feature deserialize serviceId failed");
         return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
     }
 
     SvcIdentityInfo *info = reinterpret_cast<SvcIdentityInfo *>(AdapterMalloc(sizeof(SvcIdentityInfo)));
     if (info == nullptr) {
-#ifdef __LINUX__
-        AdapterFree(svc);
-        svc = nullptr;
-#endif
         HILOG_ERROR(HILOG_MODULE_APP, "BundleMS inner feature malloc service info info failed");
         return ERR_APPEXECFWK_SYSTEM_INTERNAL_ERROR;
     }
-    uint8_t svcIdentityInfoRsp = GetSvcIdentityInfo(info, svc, reqPath, req);
-#ifdef __LINUX__
-    BinderAcquire(svc->ipcContext, svc->handle);
-    AdapterFree(svc);
-    svc = nullptr;
-#endif
+    uint8_t svcIdentityInfoRsp = GetSvcIdentityInfo(info, &svc, reqPath, req);
     if (svcIdentityInfoRsp != ERR_OK) {
         return svcIdentityInfoRsp;
     }
@@ -190,7 +168,7 @@ uint8_t BundleInnerFeature::GetSvcIdentityInfo(SvcIdentityInfo *info, const SvcI
         return ERR_APPEXECFWK_SYSTEM_INTERNAL_ERROR;
     }
     *(info->svc) = *svc;
-    info->installLocation = IpcIoPopInt32(req);
+    ReadInt32(req, &(info->installLocation));
     info->keepData = false;
 
     return ERR_OK;
@@ -203,22 +181,18 @@ uint8_t BundleInnerFeature::UninstallInnerBundle(const uint8_t funcId, IpcIo *re
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
     size_t length = 0;
-    char *bundleName = reinterpret_cast<char *>(IpcIoPopString(req, &length));
+    char *bundleName = reinterpret_cast<char *>(ReadString(req, &length));
     if (bundleName == nullptr) {
         HILOG_ERROR(HILOG_MODULE_APP, "BundleMS inner feature deserialize bundle name failed");
         return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
     }
-    SvcIdentity *svc = IpcIoPopSvc(req);
-    if (svc == nullptr) {
+    SvcIdentity svc;
+    if (!(ReadRemoteObject(req, &svc))) {
         HILOG_ERROR(HILOG_MODULE_APP, "BundleMS inner feature deserialize serviceId failed");
         return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
     }
     SvcIdentityInfo *info = reinterpret_cast<SvcIdentityInfo *>(AdapterMalloc(sizeof(SvcIdentityInfo)));
     if (info == nullptr) {
-#ifdef __LINUX__
-        AdapterFree(svc);
-        svc = nullptr;
-#endif
         HILOG_ERROR(HILOG_MODULE_APP, "BundleMS inner feature malloc service info failed");
         return ERR_APPEXECFWK_SYSTEM_INTERNAL_ERROR;
     }
@@ -228,21 +202,12 @@ uint8_t BundleInnerFeature::UninstallInnerBundle(const uint8_t funcId, IpcIo *re
     if (info->svc == nullptr) {
         AdapterFree(info->bundleName);
         AdapterFree(info);
-#ifdef __LINUX__
-        AdapterFree(svc);
-        svc = nullptr;
-#endif
         HILOG_ERROR(HILOG_MODULE_APP, "BundleMS inner feature malloc serviceId failed");
         return ERR_APPEXECFWK_SYSTEM_INTERNAL_ERROR;
     }
-    *(info->svc) = *svc;
-#ifdef __LINUX__
-    BinderAcquire(svc->ipcContext, svc->handle);
-    AdapterFree(svc);
-    svc = nullptr;
-#endif
+    *(info->svc) = svc;
     info->installLocation = 0;
-    info->keepData = IpcIoPopBool(req);
+    ReadBool(req, &(info->keepData));
     Request request = {
         .msgId = BUNDLE_UNINSTALLED,
         .len = static_cast<int16>(sizeof(SvcIdentityInfo)),
@@ -265,9 +230,11 @@ uint8_t BundleInnerFeature::SetExternalInstallMode(const uint8_t funcId, IpcIo *
     if ((req == nullptr) || (reply == nullptr)) {
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
-    uint8_t errorCode = OHOS::ManagerService::GetInstance().SetExternalInstallMode(IpcIoPopBool(req));
+    bool mode;
+    ReadBool(req, &mode);
+    uint8_t errorCode = OHOS::ManagerService::GetInstance().SetExternalInstallMode(mode);
     if (errorCode == OHOS_SUCCESS) {
-        IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
+        WriteUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
     }
     return errorCode;
 }
@@ -277,9 +244,11 @@ uint8_t BundleInnerFeature::SetInnerDebugMode(const uint8_t funcId, IpcIo *req, 
     if ((req == nullptr) || (reply == nullptr)) {
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
-    uint8_t errorCode = OHOS::ManagerService::GetInstance().SetDebugMode(IpcIoPopBool(req));
+    bool mode;
+    ReadBool(req, &mode);
+    uint8_t errorCode = OHOS::ManagerService::GetInstance().SetDebugMode(mode);
     if (errorCode == OHOS_SUCCESS) {
-        IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
+        WriteUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
     }
     return errorCode;
 }
@@ -289,9 +258,11 @@ uint8_t BundleInnerFeature::SetInnerSignMode(const uint8_t funcId, IpcIo *req, I
     if ((req == nullptr) || (reply == nullptr)) {
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
-    uint8_t errorCode = OHOS::ManagerService::GetInstance().SetSignMode(IpcIoPopBool(req));
+    bool mode;
+    ReadBool(req, &mode);
+    uint8_t errorCode = OHOS::ManagerService::GetInstance().SetSignMode(mode);
     if (errorCode == OHOS_SUCCESS) {
-        IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
+        WriteUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
     }
     return errorCode;
 }
@@ -302,7 +273,7 @@ int32 BundleInnerFeature::Invoke(IServerProxy *iProxy, int funcId, void *origin,
     if (req == nullptr) {
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
-    IpcIoPushUint8(reply, static_cast<uint8_t>(funcId));
+    WriteUint8(reply, static_cast<uint8_t>(funcId));
     uint8_t ret = OHOS_SUCCESS;
 #ifdef OHOS_DEBUG
     if ((funcId >= BMS_INNER_BEGIN) && (funcId < BMS_CMD_END)) {
@@ -315,7 +286,7 @@ int32 BundleInnerFeature::Invoke(IServerProxy *iProxy, int funcId, void *origin,
     }
 
     if (ret != OHOS_SUCCESS) {
-        IpcIoPushUint8(reply, ret);
+        WriteUint8(reply, ret);
     }
     return ret;
 }

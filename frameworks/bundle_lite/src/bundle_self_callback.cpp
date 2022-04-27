@@ -21,12 +21,12 @@
 #include "iproxy_client.h"
 #include "log.h"
 #include "samgr_lite.h"
+#include "rpc_errno.h"
 
 namespace OHOS {
 BundleSelfCallback::~BundleSelfCallback()
 {
     if (svcIdentity_ != nullptr) {
-        (void) UnregisterIpcCallback(*svcIdentity_);
         AdapterFree(svcIdentity_);
     }
 }
@@ -44,36 +44,23 @@ int32_t InnerCallback(const char *resultMessage, uint8_t resultCode, const Insta
     return ERR_OK;
 }
 
-int32_t BundleSelfCallback::Callback(const IpcContext* context, void *ipcMsg, IpcIo *io, void *arg)
+int32_t BundleSelfCallback::Callback(uint32_t code, IpcIo* data, IpcIo* reply, MessageOption option)
 {
-    if (ipcMsg == nullptr) {
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleSelfCallback ipcMsg is nullptr");
-        return ERR_APPEXECFWK_OBJECT_NULL;
-    }
-
-    if (io == nullptr) {
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleSelfCallback io is nullptr");
-        FreeBuffer(NULL, ipcMsg);
+    if (data == nullptr) {
+        HILOG_ERROR(HILOG_MODULE_APP, "BundleSelfCallback data is nullptr");
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
     InstallerCallback installerCallback = GetInstance().GetCallback();
     if (installerCallback == nullptr) {
-        FreeBuffer(NULL, ipcMsg);
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
-    uint32_t installType = 0;
-    int32_t ret = GetCode(ipcMsg, &installType);
-    if (ret != LITEIPC_OK) {
-        FreeBuffer(NULL, ipcMsg);
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleSelfCallback Get install type failed");
-        return ERR_APPEXECFWK_CALLBACK_GET_INSTALLTYPE_FAILED;
-    }
-    auto resultCode = static_cast<uint8_t>(IpcIoPopInt32(io));
-    FreeBuffer(NULL, ipcMsg);
-    if (installType == INSTALL_CALLBACK) {
+    int32_t readCode;
+    ReadInt32(data, &readCode);
+    auto resultCode = static_cast<uint8_t>(readCode);
+    if (code == INSTALL_CALLBACK) {
         return InnerCallback(INSTALL_SUCCESS, resultCode, installerCallback);
     }
-    if (installType == UNINSTALL_CALLBACK) {
+    if (code == UNINSTALL_CALLBACK) {
         return InnerCallback(UNINSTALL_SUCCESS, resultCode, installerCallback);
     }
     HILOG_ERROR(HILOG_MODULE_APP, "BundleSelfCallback get error install type");
@@ -87,12 +74,13 @@ int32 BundleSelfCallback::GenerateLocalServiceId()
         return ERR_APPEXECFWK_CALLBACK_GENERATE_LOCAL_SERVICEID_FAILED;
     }
 
-    int32_t ret = RegisterIpcCallback(Callback, 0, IPC_WAIT_FOREVER, svcIdentity_, NULL);
-    if ((ret != LITEIPC_OK)) {
-        AdapterFree(svcIdentity_);
-        svcIdentity_ = nullptr;
-        return ERR_APPEXECFWK_CALLBACK_GENERATE_LOCAL_SERVICEID_FAILED;
-    }
+    objectStub_.func = BundleSelfCallback::Callback;
+    objectStub_.args = nullptr;
+    objectStub_.isRemote = false;
+
+    svcIdentity_->handle = IPC_INVALID_HANDLE;
+    svcIdentity_->token = SERVICE_TYPE_ANONYMOUS;
+    svcIdentity_->cookie = (uintptr_t)&objectStub_;
     return ERR_OK;
 }
 

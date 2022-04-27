@@ -39,7 +39,8 @@ extern "C" {
 #include "bundle_message_id.h"
 #include "bundle_parser.h"
 #include "bundle_util.h"
-#include "liteipc_adapter.h"
+#include "ipc_skeleton.h"
+#include "rpc_errno.h"
 #include "log.h"
 #include "samgr_lite.h"
 #include "utils.h"
@@ -69,23 +70,22 @@ static void InnerTransact(uint32_t code, uint8_t resultCode, const char *bundleN
         return;
     }
     IpcIo io;
-    char data[IPC_IO_DATA_MAX];
+    char data[MAX_IO_SIZE];
     IpcIo reply;
     uintptr_t ptr;
-    IpcIoInit(&io, data, IPC_IO_DATA_MAX, 0);
-    IpcIoPushInt32(&io, static_cast<int32_t>(resultCode));
-    IpcIoPushString(&io, bundleName);
-    if (!IpcIoAvailable(&io)) {
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleMS InnerTransact ipc failed");
-        return;
-    }
+    IpcIoInit(&io, data, MAX_IO_SIZE, 0);
+    WriteInt32(&io, static_cast<int32_t>(resultCode));
+    WriteString(&io, bundleName);
     std::vector<SvcIdentity> svcIdentity = ManagerService::GetInstance().GetServiceId();
     if (svcIdentity.empty()) {
         return;
     }
+    MessageOption option;
+    MessageOptionInit(&option);
+    option.flags = TF_OP_ASYNC;
     for (const auto& svc : svcIdentity) {
-        int32_t ret = Transact(NULL, svc, code, &io, &reply, LITEIPC_FLAG_ONEWAY, &ptr);
-        if (ret != LITEIPC_OK) {
+        int32_t ret = SendRequest(svc, code, &io, &reply, option, &ptr);
+        if (ret != ERR_NONE) {
             HILOG_ERROR(HILOG_MODULE_APP, "BundleMS InnerTransact failed %{public}d\n", ret);
             return;
         }
@@ -95,17 +95,19 @@ static void InnerTransact(uint32_t code, uint8_t resultCode, const char *bundleN
 static void InnerSelfTransact(uint32_t code, uint8_t resultCode, const SvcIdentity &svc)
 {
     IpcIo io;
-    char data[IPC_IO_DATA_MAX];
+    char data[MAX_IO_SIZE];
     IpcIo reply;
-    IpcIoInit(&io, data, IPC_IO_DATA_MAX, 0);
-    IpcIoPushInt32(&io, static_cast<int32_t>(resultCode));
-    int32_t ret = Transact(NULL, svc, code, &io, &reply, LITEIPC_FLAG_ONEWAY, NULL);
-    if (ret != LITEIPC_OK) {
+    IpcIoInit(&io, data, MAX_IO_SIZE, 0);
+    WriteInt32(&io, static_cast<int32_t>(resultCode));
+
+    MessageOption option;
+    MessageOptionInit(&option);
+    option.flags = TF_OP_ASYNC;
+    int32_t ret = SendRequest(svc, code, &io, &reply, option, NULL);
+    if (ret != ERR_NONE) {
         HILOG_ERROR(HILOG_MODULE_APP, "BundleMS InnerSelfTransact failed %{public}d\n", ret);
     }
-#ifdef __LINUX__
-    BinderRelease(svc.ipcContext, svc.handle);
-#endif
+    ReleaseSvc(svc);
 }
 
 std::vector<SvcIdentity> ManagerService::GetServiceId() const
@@ -275,9 +277,7 @@ void ManagerService::AddCallbackServiceId(const SvcIdentity &svc)
 
 void ManagerService::RemoveCallbackServiceId(const SvcIdentity &svc)
 {
-#ifdef __LINUX__
-    BinderRelease(svc.ipcContext, svc.handle);
-#endif
+    ReleaseSvc(svc);
     for (auto it = svcIdentity_.begin(); it != svcIdentity_.end(); ++it) {
         if (CompareServiceId(*it, svc)) {
             svcIdentity_.erase(it);
