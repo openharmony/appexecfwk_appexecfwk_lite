@@ -27,7 +27,7 @@
             "permission",
             "ipc_lite",
             "samgr_lite",
-            "resmgr_lite",
+            "resource_management_lite",
             "appverify"
             ],
             "third_party": [
