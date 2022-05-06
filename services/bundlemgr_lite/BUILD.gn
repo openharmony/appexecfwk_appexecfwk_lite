@@ -55,6 +55,7 @@ if (ohos_kernel_type == "liteos_m") {
       "//base/global/resmgr_lite/interfaces/innerkits/include",
       "//foundation/distributedschedule/samgr_lite/interfaces/kits/registry",
       "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
+      "//foundation/communication/ipc/interfaces/innerkits/c/ipc/include",
       "//third_party/jerryscript/jerry-core/api",
       "//third_party/jerryscript/jerry-core/include",
       "//third_party/cJSON",
