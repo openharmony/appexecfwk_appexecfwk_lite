@@ -52,7 +52,7 @@ if (ohos_kernel_type == "liteos_m") {
       "${aafwk_lite_path}/interfaces/kits/ability_lite",
       "${aafwk_lite_path}/interfaces/kits/want_lite",
       "${aafwk_lite_path}/frameworks/want_lite/include",
-      "//base/global/resource_management_lite/interfaces/innerkits/include",
+      "//base/global/resource_management_lite/interfaces/inner_api/include",
       "//foundation/distributedschedule/samgr_lite/interfaces/kits/registry",
       "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
       "//third_party/jerryscript/jerry-core/api",
@@ -102,7 +102,7 @@ if (ohos_kernel_type == "liteos_m") {
       "src/zip_file.cpp",
     ]
     include_dirs = [
-      "//base/global/resource_management_lite/interfaces/innerkits/include",
+      "//base/global/resource_management_lite/interfaces/inner_api/include",
       "${aafwk_lite_path}/services/abilitymgr_lite/include",
       "${aafwk_lite_path}/interfaces/innerkits/abilitymgr_lite",
       "${aafwk_lite_path}/interfaces/kits/ability_lite",
