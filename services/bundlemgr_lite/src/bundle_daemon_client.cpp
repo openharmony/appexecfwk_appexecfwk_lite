@@ -133,7 +133,7 @@ bool BundleDaemonClient::Initialize()
     }
 
     // register bundle_daemon death callback
-    bdsSvcIdentity_ = SAMGR_GetRemoteIdentity(BDS_SERVICE, nullptr);    
+    bdsSvcIdentity_ = SAMGR_GetRemoteIdentity(BDS_SERVICE, nullptr);
     if (::AddDeathRecipient(bdsSvcIdentity_, &BundleDaemonClient::DeathCallback, this, &cbid_) != ERR_NONE) {
         PRINTW("BundleDaemonClient", "register bundle_daemon death callback fail");
         // Keep running if register death callback fail
