@@ -301,6 +301,7 @@ void GtManagerService::InstallPreBundle(List<ToBeInstalledApp *> systemPathList,
     }
 
     // scan system apps and third system apps
+    DisableServiceWdg();
     ScanSystemApp(uninstallRecord, &systemPathList_);
     if (uninstallRecord != nullptr) {
         cJSON_Delete(uninstallRecord);
@@ -308,6 +309,7 @@ void GtManagerService::InstallPreBundle(List<ToBeInstalledApp *> systemPathList,
 
     // scan third apps
     ScanThirdApp(INSTALL_PATH, &systemPathList_);
+    EnableServiceWdg();
     for (auto node = systemPathList.Begin(); node != systemPathList.End(); node = node->next_) {
         ToBeInstalledApp *toBeInstalledApp = node->value_;
         if (!BundleUtil::IsFile(toBeInstalledApp->path) ||
@@ -825,9 +827,7 @@ void GtManagerService::TransformJsToBc(const char *codePath, const char *bundleJ
         return;
     }
 
-    DisableServiceWdg();
     EXECRES result = walk_directory(jsPath);
-    EnableServiceWdg();
     HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] transform js to bc, result is %{public}d", result);
     if (result != EXCE_ACE_JERRY_EXEC_OK) {
         result = walk_del_bytecode(jsPath);
@@ -1000,6 +1000,7 @@ void GtManagerService::QueryPreAppInfo(const char *appDir, PreAppList *list)
     }
     char *fileName = reinterpret_cast<char *>(AdapterMalloc(MAX_NAME_LEN + 1));
     if (fileName == nullptr) {
+        closedir(dir);
         return;
     }
     while ((ent = readdir(dir)) != nullptr) {
@@ -1035,6 +1036,7 @@ void GtManagerService::QueryPreAppInfo(const char *appDir, PreAppList *list)
         AdapterFree(appPath);
     }
     AdapterFree(fileName);
+    closedir(dir);
 }
 
 void GtManagerService::InsertPreAppInfo(const char *filePath, PreAppList *list)
