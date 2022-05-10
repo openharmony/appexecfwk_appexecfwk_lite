@@ -20,7 +20,7 @@
 
 #include "ohos_errno.h"
 #include "iproxy_client.h"
-#include "liteipc_adapter.h"
+#include "ipc_skeleton.h"
 #include "mutex_lock.h"
 #include "nocopyable.h"
 
@@ -42,8 +42,8 @@ public:
     int32_t RemoveFile(const char *file);
     int32_t RemoveInstallDirectory(const char *codePath, const char *dataPath, bool keepData);
     int32_t CallClientInvoke(int32_t funcId, const char *firstPath, const char *secondPath);
-    static int32_t BundleDaemonCallback(const IpcContext* context, void *ipcMsg, IpcIo *io, void *arg);
-    static int32_t DeathCallback(const IpcContext* context, void* ipcMsg, IpcIo* data, void* arg);
+    static int32_t BundleDaemonCallback(uint32_t code, IpcIo* data, IpcIo* reply, MessageOption option);
+    static void DeathCallback(void* arg);
     static int Notify(IOwner owner, int code, IpcIo *reply);
 
 private:
@@ -53,6 +53,7 @@ private:
     IClientProxy *bdsClient_ { nullptr };
     SvcIdentity svcIdentity_ {};
     SvcIdentity bdsSvcIdentity_ {};
+    IpcObjectStub objectStub_ {};
     uint32_t cbid_ = INVALID_INDEX;
     sem_t sem_;
     Mutex mutex_;

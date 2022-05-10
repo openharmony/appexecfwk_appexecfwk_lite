@@ -81,28 +81,28 @@ bool SerializeElement(IpcIo *io, const ElementName *element)
     }
 
     if (element->deviceId == nullptr || strlen(element->deviceId) == 0) {
-        IpcIoPushInt32(io, VALUE_NULL);
+        WriteInt32(io, VALUE_NULL);
     } else if (strlen(element->deviceId) > MAX_DEVICE_ID) {
         return false;
     } else {
-        IpcIoPushInt32(io, VALUE_OBJECT);
-        IpcIoPushString(io, element->deviceId);
+        WriteInt32(io, VALUE_OBJECT);
+        WriteString(io, element->deviceId);
     }
     if (element->bundleName == nullptr || strlen(element->bundleName) == 0) {
-        IpcIoPushInt32(io, VALUE_NULL);
+        WriteInt32(io, VALUE_NULL);
     } else if (strlen(element->bundleName) > MAX_BUNDLE_NAME) {
         return false;
     } else {
-        IpcIoPushInt32(io, VALUE_OBJECT);
-        IpcIoPushString(io, element->bundleName);
+        WriteInt32(io, VALUE_OBJECT);
+        WriteString(io, element->bundleName);
     }
     if (element->abilityName == nullptr || strlen(element->abilityName) == 0) {
-        IpcIoPushInt32(io, VALUE_NULL);
+        WriteInt32(io, VALUE_NULL);
     } else if (strlen(element->abilityName) > MAX_ABILITY_NAME) {
         return false;
     } else {
-        IpcIoPushInt32(io, VALUE_OBJECT);
-        IpcIoPushString(io, element->abilityName);
+        WriteInt32(io, VALUE_OBJECT);
+        WriteString(io, element->abilityName);
     }
     return true;
 }
@@ -113,17 +113,21 @@ bool DeserializeElement(ElementName *element, IpcIo *io)
         return false;
     }
 
-    if (IpcIoPopInt32(io) == VALUE_OBJECT &&
-        !SetElementDeviceID(element, reinterpret_cast<char *>(IpcIoPopString(io, nullptr)))) {
+    int32_t naspac;
+    ReadInt32(io, &naspac);
+    if (naspac == VALUE_OBJECT &&
+        !SetElementDeviceID(element, reinterpret_cast<char *>(ReadString(io, nullptr)))) {
         return false;
     }
-    if (IpcIoPopInt32(io) == VALUE_OBJECT &&
-        !SetElementBundleName(element, reinterpret_cast<char *>(IpcIoPopString(io, nullptr)))) {
+    ReadInt32(io, &naspac);
+    if (naspac == VALUE_OBJECT &&
+        !SetElementBundleName(element, reinterpret_cast<char *>(ReadString(io, nullptr)))) {
         ClearElement(element);
         return false;
     }
-    if (IpcIoPopInt32(io) == VALUE_OBJECT &&
-        !SetElementAbilityName(element, reinterpret_cast<char *>(IpcIoPopString(io, nullptr)))) {
+    ReadInt32(io, &naspac);
+    if (naspac == VALUE_OBJECT &&
+        !SetElementAbilityName(element, reinterpret_cast<char *>(ReadString(io, nullptr)))) {
         ClearElement(element);
         return false;
     }

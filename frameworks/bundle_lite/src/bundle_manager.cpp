@@ -23,7 +23,7 @@
 #include "bundle_self_callback.h"
 #include "convert_utils.h"
 #include "iproxy_client.h"
-#include "liteipc_adapter.h"
+#include "ipc_skeleton.h"
 #include "log.h"
 #include "ohos_types.h"
 #include "pms_interface.h"
@@ -67,32 +67,21 @@ static uint8_t DeserializeInnerAbilityInfo(IOwner owner, IpcIo *reply)
     if ((reply == nullptr) || (owner == nullptr)) {
         return OHOS_FAILURE;
     }
-    uint8_t resultCode = IpcIoPopUint8(reply);
+    uint8_t resultCode;
+    ReadUint8(reply, &resultCode);
     ResultOfQueryAbilityInfo *info = reinterpret_cast<ResultOfQueryAbilityInfo *>(owner);
     if (resultCode != ERR_OK) {
         info->resultCode = resultCode;
         return resultCode;
     }
-#ifdef __LINUX__
     size_t len = 0;
-    char *jsonStr = reinterpret_cast<char *>(IpcIoPopString(reply, &len));
+    char *jsonStr = reinterpret_cast<char *>(ReadString(reply, &len));
     if (jsonStr == nullptr) {
         info->resultCode = ERR_APPEXECFWK_DESERIALIZATION_FAILED;
         HILOG_ERROR(HILOG_MODULE_APP, "AbilityInfo DeserializeAbilityInfo buff is empty!");
         return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
     }
     info->abilityInfo = OHOS::ConvertUtils::ConvertStringToAbilityInfo(jsonStr, len);
-#else
-    BuffPtr *buff = IpcIoPopDataBuff(reply);
-    if (buff == nullptr) {
-        info->resultCode = ERR_APPEXECFWK_DESERIALIZATION_FAILED;
-        HILOG_ERROR(HILOG_MODULE_APP, "AbilityInfo DeserializeAbilityInfo buff is empty!");
-        return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
-    }
-    char* jsonStr = reinterpret_cast<char *>(buff->buff);
-    info->abilityInfo = OHOS::ConvertUtils::ConvertStringToAbilityInfo(jsonStr, buff->buffSz);
-    FreeBuffer(NULL, buff->buff);
-#endif
     if (info->abilityInfo == nullptr) {
         info->resultCode = ERR_APPEXECFWK_DESERIALIZATION_FAILED;
         return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
@@ -106,32 +95,21 @@ static uint8_t DeserializeInnerBundleInfo(IOwner owner, IpcIo *reply)
     if ((reply == nullptr) || (owner == nullptr)) {
         return OHOS_FAILURE;
     }
-    uint8_t resultCode = IpcIoPopUint8(reply);
+    uint8_t resultCode;
+    ReadUint8(reply, &resultCode);
     ResultOfGetBundleInfo *info = reinterpret_cast<ResultOfGetBundleInfo *>(owner);
     if (resultCode != ERR_OK) {
         info->resultCode = resultCode;
         return resultCode;
     }
-#ifdef __LINUX__
     size_t len = 0;
-    char *jsonStr = reinterpret_cast<char *>(IpcIoPopString(reply, &len));
+    char *jsonStr = reinterpret_cast<char *>(ReadString(reply, &len));
     if (jsonStr == nullptr) {
         info->resultCode = ERR_APPEXECFWK_DESERIALIZATION_FAILED;
         HILOG_ERROR(HILOG_MODULE_APP, "BundleInfo DeserializeBundleInfo buff is empty!");
         return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
     }
     info->bundleInfo = OHOS::ConvertUtils::ConvertStringToBundleInfo(jsonStr, len);
-#else
-    BuffPtr *buff = IpcIoPopDataBuff(reply);
-    if (buff == nullptr) {
-        info->resultCode = ERR_APPEXECFWK_DESERIALIZATION_FAILED;
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleInfo DeserializeBundleInfo buff is empty!");
-        return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
-    }
-    char* jsonStr = reinterpret_cast<char *>(buff->buff);
-    info->bundleInfo = OHOS::ConvertUtils::ConvertStringToBundleInfo(jsonStr, buff->buffSz);
-    FreeBuffer(NULL, buff->buff);
-#endif
     if (info->bundleInfo == nullptr) {
         info->resultCode = ERR_APPEXECFWK_DESERIALIZATION_FAILED;
         return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
@@ -145,17 +123,17 @@ static uint8_t DeserializeInnerBundleInfos(IOwner owner, IpcIo *reply)
     if ((reply == nullptr) || (owner == nullptr)) {
         return OHOS_FAILURE;
     }
-    uint8_t resultCode = IpcIoPopUint8(reply);
+    uint8_t resultCode;
+    ReadUint8(reply, &resultCode);
     ResultOfGetBundleInfos *info = reinterpret_cast<ResultOfGetBundleInfos *>(owner);
     if (resultCode != ERR_OK) {
         info->resultCode = resultCode;
         return resultCode;
     }
 
-    info->length = IpcIoPopInt32(reply);
-#ifdef __LINUX__
+    ReadInt32(reply, &(info->length));
     size_t len = 0;
-    char *jsonStr = reinterpret_cast<char*>(IpcIoPopString(reply, &len));
+    char *jsonStr = reinterpret_cast<char*>(ReadString(reply, &len));
     if (jsonStr == nullptr) {
         info->resultCode = ERR_APPEXECFWK_DESERIALIZATION_FAILED;
         HILOG_ERROR(HILOG_MODULE_APP, "BundleInfo DeserializeBundleInfos buff is empty!");
@@ -165,22 +143,7 @@ static uint8_t DeserializeInnerBundleInfos(IOwner owner, IpcIo *reply)
         info->resultCode = ERR_APPEXECFWK_DESERIALIZATION_FAILED;
         return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
     }
-#else
-    BuffPtr *buff = IpcIoPopDataBuff(reply);
-    if (buff == nullptr) {
-        info->resultCode = ERR_APPEXECFWK_DESERIALIZATION_FAILED;
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleInfo DeserializeBundleInfos buff is empty!");
-        return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
-    }
-    char *jsonStr = reinterpret_cast<char *>(buff->buff);
-    if (!OHOS::ConvertUtils::ConvertStringToBundleInfos(jsonStr, &(info->bundleInfo), info->length,
-        buff->buffSz)) {
-        FreeBuffer(NULL, buff->buff);
-        info->resultCode = ERR_APPEXECFWK_DESERIALIZATION_FAILED;
-        return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
-    }
-    FreeBuffer(NULL, buff->buff);
-#endif
+
     info->resultCode = resultCode;
     return resultCode;
 }
@@ -190,7 +153,8 @@ static uint8_t DeserializeInnerBundleName(IOwner owner, IpcIo *reply)
     if ((reply == nullptr) || (owner == nullptr)) {
         return OHOS_FAILURE;
     }
-    uint8_t resultCode = IpcIoPopUint8(reply);
+    uint8_t resultCode;
+    ReadUint8(reply, &resultCode);
     ResultOfGetBundleNameForUid *info = reinterpret_cast<ResultOfGetBundleNameForUid *>(owner);
     if (resultCode != ERR_OK) {
         info->resultCode = resultCode;
@@ -198,7 +162,7 @@ static uint8_t DeserializeInnerBundleName(IOwner owner, IpcIo *reply)
     }
 
     size_t length = 0;
-    char *bundleName = reinterpret_cast<char *>(IpcIoPopString(reply, &length));
+    char *bundleName = reinterpret_cast<char *>(ReadString(reply, &length));
     if (bundleName == nullptr) {
         info->resultCode = ERR_APPEXECFWK_DESERIALIZATION_FAILED;
         return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
@@ -229,13 +193,14 @@ static uint8_t DeserializeBundleSize(IOwner owner, IpcIo *reply)
     if ((reply == nullptr) || (owner == nullptr)) {
         return OHOS_FAILURE;
     }
-    uint8_t resultCode = IpcIoPopUint8(reply);
+    uint8_t resultCode;
+    ReadUint8(reply, &resultCode);
     ResultOfGetBundleSize *info = reinterpret_cast<ResultOfGetBundleSize *>(owner);
     if (resultCode != ERR_OK) {
         info->resultCode = resultCode;
         return resultCode;
     }
-    info->bundleSize = IpcIoPopUint32(reply);
+    ReadUint32(reply, &(info->bundleSize));
     info->resultCode = resultCode;
     return resultCode;
 }
@@ -245,13 +210,15 @@ static uint8_t DeserializeSystemCapabilities(IOwner owner, IpcIo *reply)
     if ((reply == nullptr) || (owner == nullptr)) {
         return OHOS_FAILURE;
     }
-    uint8_t resultCode = IpcIoPopUint8(reply);
+    uint8_t resultCode;
+    ReadUint8(reply, &resultCode);
     ResultOfGetSysCap *info = reinterpret_cast<ResultOfGetSysCap *>(owner);
     if (resultCode != ERR_OK) {
         info->resultCode = resultCode;
         return resultCode;
     }
-    int32_t sysCapCount = IpcIoPopInt32(reply);
+    int32_t sysCapCount;
+    ReadInt32(reply, &sysCapCount);
     info->systemCap.systemCapName = reinterpret_cast<SystemCapName *>(AdapterMalloc(sizeof(SystemCapName) *
         sysCapCount));
     if (info->systemCap.systemCapName == nullptr) {
@@ -268,7 +235,7 @@ static uint8_t DeserializeSystemCapabilities(IOwner owner, IpcIo *reply)
     }
     for (int32_t index = 0; index < sysCapCount; index++) {
         size_t sysCapNameLen;
-        char *sysCapName = reinterpret_cast<char *>(IpcIoPopString(reply, &sysCapNameLen));
+        char *sysCapName = reinterpret_cast<char *>(ReadString(reply, &sysCapNameLen));
         errno_t err = strncpy_s(info->systemCap.systemCapName[index].name, MAX_SYSCAP_NAME_LEN,
             sysCapName, sysCapNameLen);
         if (err != EOK) {
@@ -288,11 +255,13 @@ static int Notify(IOwner owner, int code, IpcIo *reply)
         HILOG_ERROR(HILOG_MODULE_APP, "BundleManager Notify ipc is nullptr");
         return OHOS_FAILURE;
     }
-    switch (IpcIoPopUint8(reply)) {
+    uint8_t resultCode;
+    ReadUint8(reply, &resultCode);
+    switch (resultCode) {
         case INSTALL:
         case UNINSTALL: {
             uint8_t *ret = reinterpret_cast<uint8_t *>(owner);
-            *ret = IpcIoPopUint8(reply);
+            ReadUint8(reply, ret);
             HILOG_INFO(HILOG_MODULE_APP, "BundleManager install or uninstall invoke return: %{public}d", *ret);
             break;
         }
@@ -312,7 +281,7 @@ static int Notify(IOwner owner, int code, IpcIo *reply)
         }
         case CHECK_SYS_CAP: {
             uint8_t *ret = reinterpret_cast<uint8_t *>(owner);
-            *ret = IpcIoPopUint8(reply);
+            ReadUint8(reply, ret);
             HILOG_INFO(HILOG_MODULE_APP, "BundleManager HasSystemCapability invoke return: %{public}d", *ret);
             break;
         }
@@ -327,7 +296,7 @@ static int Notify(IOwner owner, int code, IpcIo *reply)
         case SET_SIGN_DEBUG_MODE:
         case SET_SIGN_MODE: {
             uint8_t *ret = reinterpret_cast<uint8_t *>(owner);
-            *ret = IpcIoPopUint8(reply);
+            ReadUint8(reply, ret);
             break;
         }
 #endif
@@ -385,28 +354,20 @@ bool Install(const char *hapPath, const InstallParam *installParam, InstallerCal
     }
 
     IpcIo ipcIo;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, OBJECT_NUMBER_IN_INSTALLATION);
-#ifdef __LINUX__
-    IpcIoPushString(&ipcIo, hapPath);
-#else
-    BuffPtr dataBuff = {
-        .buffSz = strlen(hapPath) + 1, // include \0
-        .buff = const_cast<char *>(hapPath)
-    };
-    IpcIoPushDataBuff(&ipcIo, &dataBuff);
-#endif
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&ipcIo, data, MAX_IO_SIZE, OBJECT_NUMBER_IN_INSTALLATION);
+    WriteString(&ipcIo, hapPath);
     const SvcIdentity *svc = OHOS::BundleSelfCallback::GetInstance().RegisterBundleSelfCallback(installerCallback);
     if (svc == nullptr) {
         HILOG_ERROR(HILOG_MODULE_APP, "BundleManager Install svc is nullptr");
         return false;
     }
-    IpcIoPushSvc(&ipcIo, svc);
-    IpcIoPushInt32(&ipcIo, installParam->installLocation);
-    if (!IpcIoAvailable(&ipcIo)) {
+    bool writeRemote = WriteRemoteObject(&ipcIo, svc);
+    if (!writeRemote) {
         HILOG_ERROR(HILOG_MODULE_APP, "BundleManager Install ipc failed");
         return false;
     }
+    WriteInt32(&ipcIo, installParam->installLocation);
     HILOG_DEBUG(HILOG_MODULE_APP, "BMS client invoke install");
     uint8_t result = 0;
     int32_t ret = bmsInnerClient->Invoke(bmsInnerClient, INSTALL, &ipcIo, &result, Notify);
@@ -441,15 +402,15 @@ bool Uninstall(const char *bundleName, const InstallParam *installParam, Install
         return false;
     }
     IpcIo ipcIo;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, 1);
-    IpcIoPushString(&ipcIo, bundleName);
-    IpcIoPushSvc(&ipcIo, svc);
-    IpcIoPushBool(&ipcIo, installParam->keepData);
-    if (!IpcIoAvailable(&ipcIo)) {
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&ipcIo, data, MAX_IO_SIZE, 1);
+    WriteString(&ipcIo, bundleName);
+    bool writeRemote = WriteRemoteObject(&ipcIo, svc);
+    if (!writeRemote) {
         HILOG_ERROR(HILOG_MODULE_APP, "BundleManager Uninstall ipc failed");
         return false;
     }
+    WriteBool(&ipcIo, installParam->keepData);
     HILOG_DEBUG(HILOG_MODULE_APP, "BMS client invoke uninstall");
     uint8_t result = 0;
     int32_t ret = bmsInnerClient->Invoke(bmsInnerClient, UNINSTALL, &ipcIo, &result, Notify);
@@ -476,13 +437,9 @@ uint8_t QueryAbilityInfo(const Want *want, AbilityInfo *abilityInfo)
     }
 
     IpcIo ipcIo;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, OBJECT_NUMBER_IN_WANT);
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&ipcIo, data, MAX_IO_SIZE, OBJECT_NUMBER_IN_WANT);
     if (!SerializeWant(&ipcIo, want)) {
-        return ERR_APPEXECFWK_SERIALIZATION_FAILED;
-    }
-    if (!IpcIoAvailable(&ipcIo)) {
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleManager QueryAbilityInfo ipc failed");
         return ERR_APPEXECFWK_SERIALIZATION_FAILED;
     }
     ResultOfQueryAbilityInfo resultOfQueryAbilityInfo = { 0, nullptr };
@@ -526,14 +483,10 @@ uint8_t GetBundleInfo(const char *bundleName, int32_t flags, BundleInfo *bundleI
     }
 
     IpcIo ipcIo;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, 0);
-    IpcIoPushString(&ipcIo, bundleName);
-    IpcIoPushInt32(&ipcIo, flags);
-    if (!IpcIoAvailable(&ipcIo)) {
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleManager GetBundleInfo ipc failed");
-        return ERR_APPEXECFWK_SERIALIZATION_FAILED;
-    }
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&ipcIo, data, MAX_IO_SIZE, 0);
+    WriteString(&ipcIo, bundleName);
+    WriteInt32(&ipcIo, flags);
     ResultOfGetBundleInfo resultOfGetBundleInfo;
     resultOfGetBundleInfo.bundleInfo = nullptr;
     int32_t ret = bmsClient->Invoke(bmsClient, GET_BUNDLE_INFO, &ipcIo, &resultOfGetBundleInfo, Notify);
@@ -570,10 +523,6 @@ static uint8_t ObtainInnerBundleInfos(const int flags, BundleInfo **bundleInfos,
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
 
-    if (!IpcIoAvailable(ipcIo)) {
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleManager GetBundleInfos ipc failed");
-        return ERR_APPEXECFWK_SERIALIZATION_FAILED;
-    }
     ResultOfGetBundleInfos resultOfGetBundleInfos;
     resultOfGetBundleInfos.length = 0;
     resultOfGetBundleInfos.bundleInfo = nullptr;
@@ -618,9 +567,9 @@ uint8_t GetBundleInfos(const int flags, BundleInfo **bundleInfos, int32_t *len)
         return ERR_APPEXECFWK_QUERY_PARAMETER_ERROR;
     }
     IpcIo ipcIo;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, 0);
-    IpcIoPushInt32(&ipcIo, flags);
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&ipcIo, data, MAX_IO_SIZE, 0);
+    WriteInt32(&ipcIo, flags);
     return ObtainInnerBundleInfos(flags, bundleInfos, len, GET_BUNDLE_INFOS, &ipcIo);
 }
 
@@ -643,13 +592,9 @@ uint32_t GetBundleSize(const char *bundleName)
     }
 
     IpcIo ipcIo;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, 0);
-    IpcIoPushString(&ipcIo, bundleName);
-    if (!IpcIoAvailable(&ipcIo)) {
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleManager GetBundleSize ipc failed");
-        return 0;
-    }
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&ipcIo, data, MAX_IO_SIZE, 0);
+    WriteString(&ipcIo, bundleName);
 
     ResultOfGetBundleSize resultOfGetBundleSize;
     int32_t ret = bmsClient->Invoke(bmsClient, GET_BUNDLE_SIZE, &ipcIo, &resultOfGetBundleSize, Notify);
@@ -667,8 +612,8 @@ uint8_t QueryKeepAliveBundleInfos(BundleInfo **bundleInfos, int32_t *len)
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
     IpcIo ipcIo;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, 0);
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&ipcIo, data, MAX_IO_SIZE, 0);
     return ObtainInnerBundleInfos(0, bundleInfos, len, QUERY_KEEPALIVE_BUNDLE_INFOS, &ipcIo);
 }
 
@@ -678,9 +623,9 @@ uint8_t GetBundleInfosByMetaData(const char *metaDataKey, BundleInfo **bundleInf
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
     IpcIo ipcIo;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, 0);
-    IpcIoPushString(&ipcIo, metaDataKey);
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&ipcIo, data, MAX_IO_SIZE, 0);
+    WriteString(&ipcIo, metaDataKey);
     return ObtainInnerBundleInfos(0, bundleInfos, len, GET_BUNDLE_INFOS_BY_METADATA, &ipcIo);
 }
 
@@ -700,9 +645,9 @@ uint8_t GetBundleNameForUid(int32_t uid, char **bundleName)
     }
 
     IpcIo ipcIo;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, 0);
-    IpcIoPushInt32(&ipcIo, uid);
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&ipcIo, data, MAX_IO_SIZE, 0);
+    WriteInt32(&ipcIo, uid);
 
     ResultOfGetBundleNameForUid resultOfGetBundleNameForUid;
     resultOfGetBundleNameForUid.length = 0;
@@ -744,13 +689,9 @@ bool HasSystemCapability(const char *sysCapName)
         return false;
     }
     IpcIo ipcIo;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, 0);
-    IpcIoPushString(&ipcIo, sysCapName);
-    if (!IpcIoAvailable(&ipcIo)) {
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleManager HasSystemCapability ipc failed");
-        return false;
-    }
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&ipcIo, data, MAX_IO_SIZE, 0);
+    WriteString(&ipcIo, sysCapName);
     uint8_t result = 0;
     int32_t ret = bmsClient->Invoke(bmsClient, CHECK_SYS_CAP, &ipcIo, &result, Notify);
     if (ret != OHOS_SUCCESS) {
@@ -768,12 +709,8 @@ SystemCapability *GetSystemAvailableCapabilities()
         return nullptr;
     }
     IpcIo ipcIo;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, 0);
-    if (!IpcIoAvailable(&ipcIo)) {
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleManager GetSystemAvailableCapabilities ipc failed");
-        return nullptr;
-    }
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&ipcIo, data, MAX_IO_SIZE, 0);
     ResultOfGetSysCap resultOfGetSysCap;
     resultOfGetSysCap.systemCap.systemCapNum = 0;
     resultOfGetSysCap.systemCap.systemCapName = nullptr;

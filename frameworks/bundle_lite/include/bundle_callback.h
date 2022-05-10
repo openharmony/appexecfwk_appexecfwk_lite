@@ -24,7 +24,7 @@
 
 #include "appexecfwk_errors.h"
 #include "bundle_callback_utils.h"
-#include "liteipc_adapter.h"
+#include "ipc_skeleton.h"
 #include "nocopyable.h"
 
 namespace OHOS {
@@ -47,6 +47,7 @@ private:
 
     BundleStateCallback bundleStateCallback_ { nullptr }; // register callback for all apps
     SvcIdentity *svcIdentity_ { nullptr };
+    IpcObjectStub objectStub_ {};
     void *innerData_ { nullptr };
     std::unordered_map<std::string, BundleCallbackInfo> callbackMap_ {};
 

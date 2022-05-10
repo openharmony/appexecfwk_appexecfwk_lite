@@ -38,10 +38,10 @@ executable("bm") {
   deps = [
     "${appexecfwk_lite_path}/frameworks/bundle_lite:bundle",
     "//base/hiviewdfx/hilog_lite/frameworks/featured:hilog_shared",
-    "//base/startup/syspara_lite/frameworks/parameter:parameter",
     "//base/security/permission/services/permission_lite/pms_client:pms_client",
+    "//base/startup/syspara_lite/frameworks/parameter:parameter",
     "//build/lite/config/component/cJSON:cjson_shared",
-    "//foundation/communication/ipc_lite:liteipc_adapter",
+    "//foundation/communication/ipc/interfaces/innerkits/c/ipc:ipc_single",
     "//foundation/distributedschedule/samgr_lite/samgr:samgr",
   ]
 
@@ -61,6 +61,7 @@ executable("bm") {
     "//foundation/distributedschedule/samgr_lite/interfaces/kits/registry",
     "//third_party/cJSON",
     "//utils/native/lite/include",
+    "//foundation/communication/ipc/interfaces/innerkits/c/ipc/include",
   ]
 
   defines = [ "OHOS_APPEXECFWK_BMS_BUNDLEMANAGER" ]
