@@ -21,7 +21,7 @@ static_library("capability_api_simulator") {
     "//foundation/arkui/ace_engine_lite/interfaces/inner_api/builtin/base",
     "//foundation/arkui/ace_engine_lite/interfaces/inner_api/builtin/jsi",
     "${appexecfwk_lite_path}/interfaces/kits/bundle_lite/js/builtin/include",
-    "//foundation/communication/ipc_lite/interfaces/kits",
+    "//foundation/communication/ipc/interfaces/innerkits/c/ipc/include",
     "${aafwk_lite_path}/interfaces/kits/want_lite",
     "${appexecfwk_lite_path}/interfaces/kits/bundle_lite",
   ]
@@ -39,7 +39,7 @@ shared_library("capability_api") {
     "//foundation/arkui/ace_engine_lite/interfaces/inner_api/builtin/base",
     "//foundation/arkui/ace_engine_lite/interfaces/inner_api/builtin/jsi",
     "${appexecfwk_lite_path}/interfaces/kits/bundle_lite/js/builtin/include",
-    "//foundation/communication/ipc_lite/interfaces/kits",
+    "//foundation/communication/ipc/interfaces/innerkits/c/ipc/include",
     "${aafwk_lite_path}/interfaces/kits/want_lite",
     "${appexecfwk_lite_path}/interfaces/kits/bundle_lite",
   ]

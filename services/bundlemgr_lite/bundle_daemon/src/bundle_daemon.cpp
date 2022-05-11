@@ -18,11 +18,10 @@
 #include <string>
 
 #include "bundle_daemon_log.h"
-#include "liteipc_adapter.h"
+#include "ipc_skeleton.h"
 #include "ohos_errno.h"
 #include "ohos_init.h"
 #include "samgr_lite.h"
-#include "serializer.h"
 
 namespace OHOS {
 namespace {
@@ -102,12 +101,12 @@ BOOL BundleDaemon::ServiceMessageHandle(Service *service, Request *request)
 int32_t BundleDaemon::Invoke(IServerProxy *iProxy, int32_t funcId, void *origin, IpcIo *req, IpcIo *reply)
 {
     PRINTI("BundleDaemon", "bundle_daemon invoke start %{public}d", funcId);
-    if (origin == nullptr || req == nullptr) {
+    if (req == nullptr) {
         PRINTE("BundleDaemon", "invalid param");
         return EC_INVALID;
     }
     // check permission
-    pid_t uid = GetCallingUid(origin);
+    pid_t uid = GetCallingUid();
     if (uid != BMS_UID) {
         PRINTE("BundleDaemon", "permission denied");
         return EC_PERMISSION;
@@ -130,7 +129,7 @@ int32_t BundleDaemon::Invoke(IServerProxy *iProxy, int32_t funcId, void *origin,
         ret = (BundleDaemon::invokeFuncs[funcId])(req);
     }
 #ifdef __LINUX__
-    IpcIoPushInt32(reply, ret);
+    WriteInt32(reply, ret);
     return ret;
 #else
     return BundleDaemon::GetInstance().bundleMsClient_->SendReply(ret);
@@ -139,38 +138,25 @@ int32_t BundleDaemon::Invoke(IServerProxy *iProxy, int32_t funcId, void *origin,
 
 int32_t BundleDaemon::RegisterCallbackInvoke(IpcIo *req)
 {
-    SvcIdentity *svcIdentity = IpcIoPopSvc(req);
-    if (svcIdentity == nullptr) {
+    SvcIdentity svcIdentity;
+    if (!(ReadRemoteObject(req, &svcIdentity))) {
         return EC_INVALID;
     }
-    BundleDaemon::GetInstance().bundleMsClient_ = new BundleMsClient(*svcIdentity);
+    BundleDaemon::GetInstance().bundleMsClient_ = new BundleMsClient(svcIdentity);
     return BundleDaemon::GetInstance().bundleMsClient_->SendReply(EC_SUCCESS);
 }
 
 static int32_t ObtainStringFromIpc(IpcIo *req, std::string &firstStr, std::string &secondStr)
 {
-#ifdef __LINUX__
     size_t length = 0;
-    std::string innerStr = reinterpret_cast<char *>(IpcIoPopString(req, &length));
-#else
-    BuffPtr *buff = IpcIoPopDataBuff(req);
-    if (buff == nullptr || buff->buffSz == 0) {
-        return EC_INVALID;
-    }
-    std::string innerStr = reinterpret_cast<char *>(buff->buff);
-#endif
-    uint32_t len = IpcIoPopUint16(req);
+    std::string innerStr = reinterpret_cast<char *>(ReadString(req, &length));
+    uint16_t len;
+    ReadUint16(req, &len);
     if (innerStr.length() <= len) {
-#ifndef __LINUX__
-        FreeBuffer(nullptr, buff->buff);
-#endif
         return EC_INVALID;
     }
     firstStr = innerStr.substr(0, len);
     secondStr = innerStr.substr(len);
-#ifndef __LINUX__
-    FreeBuffer(nullptr, buff->buff);
-#endif
     return EC_SUCCESS;
 }
 
@@ -204,13 +190,16 @@ int32_t BundleDaemon::CreatePermissionInvoke(IpcIo *req)
 int32_t BundleDaemon::CreateDataDirectoryInvoke(IpcIo *req)
 {
     size_t len = 0;
-    const char *dataPath = reinterpret_cast<char *>(IpcIoPopString(req, &len));
+    const char *dataPath = reinterpret_cast<char *>(ReadString(req, &len));
     if (dataPath == nullptr || len == 0) {
         return EC_INVALID;
     }
-    int32_t uid = IpcIoPopInt32(req);
-    int32_t gid = IpcIoPopInt32(req);
-    bool isChown = IpcIoPopBool(req);
+    int32_t uid;
+    ReadInt32(req, &uid);
+    int32_t gid;
+    ReadInt32(req, &gid);
+    bool isChown;
+    ReadBool(req, &isChown);
 
     return BundleDaemon::GetInstance().handler_.CreateDataDirectory(dataPath, uid, gid, isChown);
 }
@@ -218,41 +207,27 @@ int32_t BundleDaemon::CreateDataDirectoryInvoke(IpcIo *req)
 int32_t BundleDaemon::StoreContentToFileInvoke(IpcIo *req)
 {
     size_t len = 0;
-    const char *path = reinterpret_cast<char *>(IpcIoPopString(req, &len));
+    const char *path = reinterpret_cast<char *>(ReadString(req, &len));
     if (path == nullptr || len == 0) {
         return EC_INVALID;
     }
-#ifdef __LINUX__
     size_t buffLen = 0;
-    const char *buff = reinterpret_cast<char *>(IpcIoPopString(req, &buffLen));
+    const char *buff = reinterpret_cast<char *>(ReadString(req, &buffLen));
     if (buff == nullptr || buffLen == 0) {
         return EC_INVALID;
     }
     int32_t ret = BundleDaemon::GetInstance().handler_.StoreContentToFile(path, buff, buffLen);
-#else
-    BuffPtr *buffPtr = IpcIoPopDataBuff(req);
-    if (buffPtr == nullptr || buffPtr->buffSz == 0) {
-        return EC_INVALID;
-    }
-    char *buff = reinterpret_cast<char *>(buffPtr->buff);
-    if (buff == nullptr) {
-        return EC_INVALID;
-    }
-
-    int32_t ret = BundleDaemon::GetInstance().handler_.StoreContentToFile(path, buff, buffPtr->buffSz);
-    FreeBuffer(nullptr, buffPtr->buff);
-#endif
     return ret;
 }
 
 int32_t BundleDaemon::MoveFileInvoke(IpcIo *req)
 {
     size_t len = 0;
-    const char *oldFile = reinterpret_cast<char *>(IpcIoPopString(req, &len));
+    const char *oldFile = reinterpret_cast<char *>(ReadString(req, &len));
     if (oldFile == nullptr || len == 0) {
         return EC_INVALID;
     }
-    const char *newFile = reinterpret_cast<char *>(IpcIoPopString(req, &len));
+    const char *newFile = reinterpret_cast<char *>(ReadString(req, &len));
     if (newFile == nullptr || len == 0) {
         return EC_INVALID;
     }
@@ -262,7 +237,7 @@ int32_t BundleDaemon::MoveFileInvoke(IpcIo *req)
 int32_t BundleDaemon::RemoveFileInvoke(IpcIo *req)
 {
     size_t len = 0;
-    const char *path = reinterpret_cast<char *>(IpcIoPopString(req, &len));
+    const char *path = reinterpret_cast<char *>(ReadString(req, &len));
     if (path == nullptr || len == 0) {
         return EC_INVALID;
     }
@@ -277,7 +252,8 @@ int32_t BundleDaemon::RemoveInstallDirectoryInvoke(IpcIo *req)
     if (ret != EC_SUCCESS) {
         return ret;
     }
-    bool keepData = IpcIoPopBool(req);
+    bool keepData;
+    ReadBool(req, &keepData);
     return BundleDaemon::GetInstance().handler_.RemoveInstallDirectory(codePath.c_str(), dataPath.c_str(), keepData);
 }
 } // OHOS
