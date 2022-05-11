@@ -26,9 +26,12 @@ BundleMsClient::BundleMsClient(const SvcIdentity &svcIdentity)
 int32 BundleMsClient::SendReply(int32 result)
 {
     IpcIo request;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&request, data, IPC_IO_DATA_MAX, 0);
-    IpcIoPushInt32(&request, result);
-    return Transact(nullptr, svcIdentity_, BDS_CALLBACK, &request, nullptr, LITEIPC_FLAG_ONEWAY, nullptr);
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&request, data, MAX_IO_SIZE, 0);
+    WriteInt32(&request, result);
+    MessageOption option;
+    MessageOptionInit(&option);
+    option.flags = TF_OP_ASYNC;
+    return SendRequest(svcIdentity_, BDS_CALLBACK, &request, nullptr, option, nullptr);
 }
 } // OHOS

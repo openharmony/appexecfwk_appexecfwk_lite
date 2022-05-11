@@ -22,13 +22,12 @@
 #include "bundle_manager_service.h"
 #include "bundle_message_id.h"
 #include "convert_utils.h"
-#include "liteipc_adapter.h"
+#include "ipc_skeleton.h"
 #include "log.h"
 #include "message.h"
 #include "ohos_init.h"
 #include "samgr_lite.h"
 #include "securec.h"
-#include "serializer.h"
 #include "utils.h"
 #include "want_utils.h"
 
@@ -134,13 +133,13 @@ uint8_t BundleMsFeature::HasSystemCapability(const uint8_t funcId, IpcIo *req, I
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
     size_t size = 0;
-    char *sysCapName = reinterpret_cast<char *>(IpcIoPopString(req, &size));
+    char *sysCapName = reinterpret_cast<char *>(ReadString(req, &size));
     if (sysCapName == nullptr) {
         return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
     }
     bool hasSysCap = OHOS::ManagerService::GetInstance().HasSystemCapability(sysCapName);
     if (hasSysCap) {
-        IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
+        WriteUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
         return OHOS_SUCCESS;
     }
     return ERR_APPEXECFWK_OBJECT_NULL;
@@ -158,10 +157,10 @@ uint8_t BundleMsFeature::GetSystemAvailableCapabilities(const uint8_t funcId, Ip
     if (errorCode != OHOS_SUCCESS) {
         return errorCode;
     }
-    IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
-    IpcIoPushInt32(reply, len);
+    WriteUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
+    WriteInt32(reply, len);
     for (int32_t index = 0; index < len; index++) {
-        IpcIoPushString(reply, sysCaps[index]);
+        WriteString(reply, sysCaps[index]);
     }
     return errorCode;
 }
@@ -203,13 +202,8 @@ uint8_t BundleMsFeature::QueryInnerAbilityInfo(const uint8_t funcId, IpcIo *req,
         return ERR_APPEXECFWK_SERIALIZATION_FAILED;
     }
 #endif
-    IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
-#ifdef __LINUX__
-    IpcIoPushString(reply, str);
-#else
-    BuffPtr dataBuff = {.buffSz = strlen(str) + 1, .buff = str};
-    IpcIoPushDataBuffWithFree(reply, &dataBuff, InnerFreeDataBuff);
-#endif
+    WriteUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
+    WriteString(reply, str);
     ClearAbilityInfo(&abilityInfo);
     return OHOS_SUCCESS;
 }
@@ -220,7 +214,7 @@ uint8_t BundleMsFeature::GetInnerBundleInfo(const uint8_t funcId, IpcIo *req, Ip
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
     size_t size = 0;
-    char *bundleName = reinterpret_cast<char *>(IpcIoPopString(req, &size));
+    char *bundleName = reinterpret_cast<char *>(ReadString(req, &size));
     if (bundleName == nullptr) {
         return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
     }
@@ -228,7 +222,9 @@ uint8_t BundleMsFeature::GetInnerBundleInfo(const uint8_t funcId, IpcIo *req, Ip
     if (memset_s(&bundleInfo, sizeof(BundleInfo), 0, sizeof(BundleInfo)) != EOK) {
         return ERR_APPEXECFWK_SYSTEM_INTERNAL_ERROR;
     }
-    uint8_t errorCode = GetBundleInfo(bundleName, IpcIoPopInt32(req), &bundleInfo);
+    int32_t flag;
+    ReadInt32(req, &flag);
+    uint8_t errorCode = GetBundleInfo(bundleName, flag, &bundleInfo);
     if (errorCode != OHOS_SUCCESS) {
         HILOG_ERROR(HILOG_MODULE_APP, "BundleMS GET_BUNDLE_INFO errorcode: %{public}d\n", errorCode);
         return errorCode;
@@ -242,13 +238,8 @@ uint8_t BundleMsFeature::GetInnerBundleInfo(const uint8_t funcId, IpcIo *req, Ip
         return ERR_APPEXECFWK_SERIALIZATION_FAILED;
     }
 #endif
-    IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
-#ifdef __LINUX__
-    IpcIoPushString(reply, str);
-#else
-    BuffPtr dataBuff = {.buffSz = strlen(str) + 1, .buff = str};
-    IpcIoPushDataBuffWithFree(reply, &dataBuff, InnerFreeDataBuff);
-#endif
+    WriteUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
+    WriteString(reply, str);
     return OHOS_SUCCESS;
 }
 
@@ -259,15 +250,15 @@ uint8_t BundleMsFeature::GetInnerBundleSize(const uint8_t funcId, IpcIo *req, Ip
     }
     size_t size = 0;
     uint32_t bundleSize = 0;
-    char *bundleName = reinterpret_cast<char *>(IpcIoPopString(req, &size));
+    char *bundleName = reinterpret_cast<char *>(ReadString(req, &size));
     if (bundleName == nullptr) {
-        IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
-        IpcIoPushUint32(reply, bundleSize);
+        WriteUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
+        WriteUint32(reply, bundleSize);
         return OHOS_SUCCESS;
     }
     bundleSize = GetBundleSize(bundleName);
-    IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
-    IpcIoPushUint32(reply, bundleSize);
+    WriteUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
+    WriteUint32(reply, bundleSize);
     return OHOS_SUCCESS;
 }
 
@@ -282,11 +273,13 @@ uint8_t BundleMsFeature::HandleGetBundleInfos(const uint8_t funcId, IpcIo *req, 
     uint8_t errorCode = 0;
     size_t length = 0;
     if (funcId == GET_BUNDLE_INFOS) {
-        errorCode = GetBundleInfos(IpcIoPopInt32(req), &bundleInfos, &lengthOfBundleInfo);
+        int32_t flag;
+        ReadInt32(req, &flag);
+        errorCode = GetBundleInfos(flag, &bundleInfos, &lengthOfBundleInfo);
     } else if (funcId == QUERY_KEEPALIVE_BUNDLE_INFOS) {
         errorCode = QueryKeepAliveBundleInfos(&bundleInfos, &lengthOfBundleInfo);
     } else if (funcId == GET_BUNDLE_INFOS_BY_METADATA) {
-        metaDataKey = reinterpret_cast<char *>(IpcIoPopString(req, &length));
+        metaDataKey = reinterpret_cast<char *>(ReadString(req, &length));
         if (metaDataKey == nullptr) {
             return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
         }
@@ -309,14 +302,9 @@ uint8_t BundleMsFeature::HandleGetBundleInfos(const uint8_t funcId, IpcIo *req, 
         return ERR_APPEXECFWK_SERIALIZATION_FAILED;
     }
 #endif
-    IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
-    IpcIoPushInt32(reply, lengthOfBundleInfo);
-#ifdef __LINUX__
-    IpcIoPushString(reply, strs);
-#else
-    BuffPtr dataBuff = {.buffSz = strlen(strs) + 1, .buff = strs};
-    IpcIoPushDataBuffWithFree(reply, &dataBuff, InnerFreeDataBuff);
-#endif
+    WriteUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
+    WriteInt32(reply, lengthOfBundleInfo);
+    WriteString(reply, strs);
     BundleInfoUtils::FreeBundleInfos(bundleInfos, lengthOfBundleInfo);
     return OHOS_SUCCESS;
 }
@@ -327,13 +315,15 @@ uint8_t BundleMsFeature::GetInnerBundleNameForUid(const uint8_t funcId, IpcIo *r
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
     char *bundleName = nullptr;
-    uint8_t errorCode = GetBundleNameForUid(IpcIoPopInt32(req), &bundleName);
+    int32_t readUid;
+    ReadInt32(req, &readUid);
+    uint8_t errorCode = GetBundleNameForUid(readUid, &bundleName);
     if (errorCode != OHOS_SUCCESS) {
         AdapterFree(bundleName);
         return errorCode;
     }
-    IpcIoPushUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
-    IpcIoPushString(reply, bundleName);
+    WriteUint8(reply, static_cast<uint8_t>(OHOS_SUCCESS));
+    WriteString(reply, bundleName);
     AdapterFree(bundleName);
     return errorCode;
 }
@@ -343,26 +333,18 @@ uint8_t BundleMsFeature::ChangeInnerCallbackServiceId(const uint8_t funcId, IpcI
     if ((req == nullptr) || (reply == nullptr)) {
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
-    bool flag = IpcIoPopBool(req);
-    SvcIdentity *svc = IpcIoPopSvc(req);
-    if (svc == nullptr) {
+    bool flag;
+    ReadBool(req, &flag);
+    SvcIdentity svc;
+    if (!(ReadRemoteObject(req, &svc))) {
         return ERR_APPEXECFWK_DESERIALIZATION_FAILED;
     }
 
     auto svcIdentity = reinterpret_cast<SvcIdentity *>(AdapterMalloc(sizeof(SvcIdentity)));
     if (svcIdentity == nullptr) {
-#ifdef __LINUX__
-        AdapterFree(svc);
-        svc = nullptr;
-#endif
         return ERR_APPEXECFWK_SYSTEM_INTERNAL_ERROR;
     }
-    *svcIdentity = *svc;
-#ifdef __LINUX__
-    BinderAcquire(svc->ipcContext, svc->handle);
-    AdapterFree(svc);
-    svc = nullptr;
-#endif
+    *svcIdentity = svc;
     Request request = {
         .msgId = BUNDLE_CHANGE_CALLBACK,
         .len = static_cast<int16>(sizeof(SvcIdentity)),
@@ -382,7 +364,7 @@ int32 BundleMsFeature::Invoke(IServerProxy *iProxy, int funcId, void *origin, Ip
     if (req == nullptr) {
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
-    IpcIoPushUint8(reply, static_cast<uint8_t>(funcId));
+    WriteUint8(reply, static_cast<uint8_t>(funcId));
     uint8_t ret = OHOS_SUCCESS;
     if (funcId >= GET_BUNDLE_INFOS && funcId <= GET_BUNDLE_INFOS_BY_METADATA) {
         ret = BundleMsInvokeFuc[GET_BUNDLE_INFOS](funcId, req, reply);
@@ -395,7 +377,7 @@ int32 BundleMsFeature::Invoke(IServerProxy *iProxy, int funcId, void *origin, Ip
     }
 
     if (ret != OHOS_SUCCESS) {
-        IpcIoPushUint8(reply, ret);
+        WriteUint8(reply, ret);
     }
     return ret;
 }

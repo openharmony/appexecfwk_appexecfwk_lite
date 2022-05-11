@@ -16,7 +16,7 @@
 #ifndef OHOS_BUNDLEMS_CLIENT_H
 #define OHOS_BUNDLEMS_CLIENT_H
 
-#include "liteipc_adapter.h"
+#include "ipc_skeleton.h"
 #include "nocopyable.h"
 #include "ohos_types.h"
 

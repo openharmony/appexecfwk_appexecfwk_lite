@@ -23,12 +23,12 @@
 #include "log.h"
 #include "ohos_types.h"
 #include "samgr_lite.h"
+#include "rpc_errno.h"
 
 namespace OHOS {
 BundleCallback::~BundleCallback()
 {
     if (svcIdentity_ != nullptr) {
-        UnregisterIpcCallback(*svcIdentity_);
         TransmitServiceId(*svcIdentity_, false);
         AdapterFree(svcIdentity_);
     }
@@ -40,11 +40,13 @@ static int Notify(IOwner owner, int code, IpcIo *reply)
     if ((reply == nullptr) || (owner == nullptr)) {
         return EC_INVALID;
     }
-    if (IpcIoPopUint8(reply) != CHANGE_CALLBACK_SERVICE_IDENTITY) {
+    uint8_t cmd;
+    ReadUint8(reply, &cmd);
+    if (cmd != CHANGE_CALLBACK_SERVICE_IDENTITY) {
         return EC_INVALID;
     }
     uint8_t *result = reinterpret_cast<uint8_t *>(owner);
-    *result = IpcIoPopUint8(reply);
+    ReadUint8(reply, result);
     return EC_SUCCESS;
 }
 
@@ -78,36 +80,22 @@ int32_t InnerCallback(uint32_t installType, uint8_t resultCode, const char *bund
     return ERR_APPEXECFWK_CALLBACK_GET_ERROR_INSTALLTYPE;
 }
 
-static int32_t Callback(const IpcContext* context, void *ipcMsg, IpcIo *io, void *arg)
+static int32_t Callback(uint32_t code, IpcIo* data, IpcIo* reply, MessageOption option)
 {
-    // at here, arg is always been nullptr
-    if (ipcMsg == nullptr) {
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleCallback ipcMsg is nullptr");
+    if (data == nullptr) {
+        HILOG_ERROR(HILOG_MODULE_APP, "BundleCallback data is nullptr");
         return ERR_APPEXECFWK_OBJECT_NULL;
     }
 
-    if (io == nullptr) {
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleCallback io is nullptr");
-        FreeBuffer(NULL, ipcMsg);
-        return ERR_APPEXECFWK_OBJECT_NULL;
-    }
-
-    uint32_t installType = 0;
-    int32_t ret = GetCode(ipcMsg, &installType);
-    if (ret != LITEIPC_OK) {
-        FreeBuffer(NULL, ipcMsg);
-        HILOG_ERROR(HILOG_MODULE_APP, "BundleCallback Get install type failed");
-        return ERR_APPEXECFWK_CALLBACK_GET_INSTALLTYPE_FAILED;
-    }
-    if ((installType == INSTALL_CALLBACK) || (installType == UNINSTALL_CALLBACK)) {
-        uint8_t resultCode = static_cast<uint8_t>(IpcIoPopInt32(io));
+    if ((code == INSTALL_CALLBACK) || (code == UNINSTALL_CALLBACK)) {
+        int32_t readCode;
+        ReadInt32(data, &readCode);
+        uint8_t resultCode = static_cast<uint8_t>(readCode);
         size_t size = 0;
-        char *bundleName = reinterpret_cast<char *>(IpcIoPopString(io, &size));
-        ret = InnerCallback(installType, resultCode, bundleName);
-        FreeBuffer(NULL, ipcMsg);
+        char *bundleName = reinterpret_cast<char *>(ReadString(data, &size));
+        int32_t ret = InnerCallback(code, resultCode, bundleName);
         return ret;
     }
-    FreeBuffer(NULL, ipcMsg);
     HILOG_ERROR(HILOG_MODULE_APP, "BundleSelfCallback get error install type");
     return ERR_APPEXECFWK_CALLBACK_GET_ERROR_INSTALLTYPE;
 }
@@ -124,11 +112,11 @@ int32_t BundleCallback::TransmitServiceId(const SvcIdentity &svc, bool flag)
         return ERR_APPEXECFWK_CALLBACK_SERVICEID_TRANSMITTED_FAILED;
     }
     IpcIo ipcIo;
-    uint32_t data[IPC_IO_DATA_MAX];
-    IpcIoInit(&ipcIo, data, IPC_IO_DATA_MAX, 1);
-    IpcIoPushBool(&ipcIo, flag);
-    IpcIoPushSvc(&ipcIo, &svc);
-    if (!IpcIoAvailable(&ipcIo)) {
+    uint32_t data[MAX_IO_SIZE];
+    IpcIoInit(&ipcIo, data, MAX_IO_SIZE, 1);
+    WriteBool(&ipcIo, flag);
+    bool writeRemote = WriteRemoteObject(&ipcIo, &svc);
+    if (!writeRemote) {
         HILOG_ERROR(HILOG_MODULE_APP, "BundleCallback TransmitServiceId ipc failed");
         return ERR_APPEXECFWK_IPCIO_UNAVAILABLED;
     }
@@ -151,14 +139,17 @@ int32_t BundleCallback::GenerateLocalServiceId()
     if (svcIdentity_ == nullptr) {
         return ERR_APPEXECFWK_CALLBACK_GENERATE_LOCAL_SERVICEID_FAILED;
     }
-    int32_t ret = RegisterIpcCallback(Callback, 0, IPC_WAIT_FOREVER, svcIdentity_, NULL);
-    if ((ret != LITEIPC_OK)) {
-        AdapterFree(svcIdentity_);
-        return ERR_APPEXECFWK_CALLBACK_GENERATE_LOCAL_SERVICEID_FAILED;
-    }
-    ret = TransmitServiceId(*svcIdentity_, true);
+    
+    objectStub_.func = Callback;
+    objectStub_.args = nullptr;
+    objectStub_.isRemote = false;
+
+    svcIdentity_->handle = IPC_INVALID_HANDLE;
+    svcIdentity_->token = SERVICE_TYPE_ANONYMOUS;
+    svcIdentity_->cookie = (uintptr_t)&objectStub_;
+
+    int32_t ret = TransmitServiceId(*svcIdentity_, true);
     if (ret != ERR_OK) {
-        UnregisterIpcCallback(*svcIdentity_);
         AdapterFree(svcIdentity_);
         return ERR_APPEXECFWK_CALLBACK_SERVICEID_TRANSMITTED_FAILED;
     }
@@ -211,7 +202,6 @@ int32_t BundleCallback::UnregisterBundleStateCallback()
     innerData_ = nullptr;
     callbackMap_.clear();
     (void) TransmitServiceId(*svcIdentity_, false);
-    (void) UnregisterIpcCallback(*svcIdentity_);
     AdapterFree(svcIdentity_);
     return ERR_OK;
 }

@@ -25,6 +25,7 @@
 #include "ohos_errno.h"
 #include "samgr_lite.h"
 #include "utils.h"
+#include "rpc_errno.h"
 
 namespace OHOS {
 namespace {
@@ -41,7 +42,7 @@ int BundleDaemonClient::Notify(IOwner owner, int code, IpcIo *reply)
     if (client == nullptr) {
         return EC_INVALID;
     }
-    client->result_ = IpcIoPopInt32(reply);
+    ReadInt32(reply, &(client->result_));
     int value;
     sem_getvalue(&client->sem_, &value);
     if (value <= 0) {
@@ -50,20 +51,14 @@ int BundleDaemonClient::Notify(IOwner owner, int code, IpcIo *reply)
     return EC_SUCCESS;
 }
 #else
-int32_t BundleDaemonClient::BundleDaemonCallback(const IpcContext* context, void *ipcMsg, IpcIo *io, void *arg)
+int32_t BundleDaemonClient::BundleDaemonCallback(uint32_t code, IpcIo* data, IpcIo* reply, MessageOption option)
 {
-    BundleDaemonClient *client = reinterpret_cast<BundleDaemonClient *>(arg);
+    BundleDaemonClient *client = reinterpret_cast<BundleDaemonClient *>(option.args);
     if (client == nullptr) {
-        if (ipcMsg != nullptr) {
-            FreeBuffer(nullptr, ipcMsg);
-        }
         return EC_INVALID;
     }
 
-    client->result_ = IpcIoPopInt32(io);
-    if (ipcMsg != nullptr) {
-        FreeBuffer(nullptr, ipcMsg);
-    }
+    ReadInt32(data, &(client->result_));
     int value;
     sem_getvalue(&client->sem_, &value);
     if (value <= 0) {
@@ -73,33 +68,27 @@ int32_t BundleDaemonClient::BundleDaemonCallback(const IpcContext* context, void
 }
 #endif
 
-int32_t BundleDaemonClient::DeathCallback(const IpcContext* context, void* ipcMsg, IpcIo* data, void* arg)
+void BundleDaemonClient::DeathCallback(void* arg)
 {
-    if (ipcMsg != nullptr) {
-        FreeBuffer(nullptr, ipcMsg);
-    }
     pthread_t pid;
-    if (pthread_create(&pid, nullptr, RegisterDeathCallback, arg) == 0) {
-        return EC_SUCCESS;
-    }
 
-    BundleDaemonClient *client = reinterpret_cast<BundleDaemonClient *>(arg);
-    if (client != nullptr) {
-        client->result_ = EC_CANCELED;
-        int value;
-        sem_getvalue(&client->sem_, &value);
-        if (value <= 0) {
-            sem_post(&client->sem_);
+    if (pthread_create(&pid, nullptr, RegisterDeathCallback, arg) != 0) {
+        BundleDaemonClient *client = reinterpret_cast<BundleDaemonClient *>(arg);
+        if (client != nullptr) {
+            client->result_ = EC_CANCELED;
+            int value;
+            sem_getvalue(&client->sem_, &value);
+            if (value <= 0) {
+                sem_post(&client->sem_);
+            }
         }
     }
-    return EC_INVALID;
 }
 
 BundleDaemonClient::~BundleDaemonClient()
 {
     if (initialized_) {
-        UnregisterIpcCallback(svcIdentity_);
-        UnregisterDeathCallback(bdsSvcIdentity_, cbid_);
+        RemoveDeathRecipient(bdsSvcIdentity_, cbid_);
         bdsClient_->Release(reinterpret_cast<IUnknown *>(bdsClient_));
         bdsClient_ = nullptr;
         sem_destroy(&sem_);
@@ -129,15 +118,15 @@ bool BundleDaemonClient::Initialize()
 
     // register bundle_daemon callback
 #ifndef __LINUX__
-    int32_t ret = RegisterIpcCallback(
-        BundleDaemonClient::BundleDaemonCallback, 0, IPC_WAIT_FOREVER, &svcIdentity_, this);
-    if (ret != EC_SUCCESS) {
-        PRINTE("BundleDaemonClient", "register bundle_daemon RegisterIpcCallback fail");
-        sem_destroy(&sem_);
-        return false;
-    }
+    objectStub_.func = BundleDaemonClient::BundleDaemonCallback;
+    objectStub_.args = this;
+    objectStub_.isRemote = false;
+
+    svcIdentity_.handle = IPC_INVALID_HANDLE;
+    svcIdentity_.token = SERVICE_TYPE_ANONYMOUS;
+    svcIdentity_.cookie = (uintptr_t)&objectStub_;
 #endif
-    if (RegisterCallback() != LITEIPC_OK) {
+    if (RegisterCallback() != ERR_NONE) {
         PRINTE("BundleDaemonClient", "register bundle_daemon callback fail");
         sem_destroy(&sem_);
         return false;
@@ -145,8 +134,7 @@ bool BundleDaemonClient::Initialize()
 
     // register bundle_daemon death callback
     bdsSvcIdentity_ = SAMGR_GetRemoteIdentity(BDS_SERVICE, nullptr);
-    if (::RegisterDeathCallback(nullptr, bdsSvcIdentity_, &BundleDaemonClient::DeathCallback, this, &cbid_) !=
-        LITEIPC_OK) {
+    if (::AddDeathRecipient(bdsSvcIdentity_, &BundleDaemonClient::DeathCallback, this, &cbid_) != ERR_NONE) {
         PRINTW("BundleDaemonClient", "register bundle_daemon death callback fail");
         // Keep running if register death callback fail
     }
@@ -170,15 +158,15 @@ void *BundleDaemonClient::RegisterDeathCallback(void *arg)
     // Register invoke callback and death callback again
     Lock<Mutex> lock(client->mutex_);
     client->RegisterCallback();
+    RemoveDeathRecipient(client->bdsSvcIdentity_, client->cbid_);
 
-    UnregisterDeathCallback(client->bdsSvcIdentity_, client->cbid_);
     client->cbid_ = INVALID_INDEX;
     client->bdsSvcIdentity_.handle = INVALID_INDEX;
     client->bdsSvcIdentity_.token = INVALID_INDEX;
 
     client->bdsSvcIdentity_ = SAMGR_GetRemoteIdentity(BDS_SERVICE, nullptr);
-    if (::RegisterDeathCallback(nullptr, client->bdsSvcIdentity_, &BundleDaemonClient::DeathCallback,
-        client, &client->cbid_) != LITEIPC_OK) {
+    if (::AddDeathRecipient(client->bdsSvcIdentity_, &BundleDaemonClient::DeathCallback,
+        client, &client->cbid_) != ERR_NONE) {
         PRINTW("BundleDeamonClient", "register death callback fail");
         // Keep running if register death callback fail
     }
@@ -199,9 +187,12 @@ int32_t BundleDaemonClient::WaitResultSync(int32_t result)
 int32_t BundleDaemonClient::RegisterCallback()
 {
     IpcIo request;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&request, data, IPC_IO_DATA_MAX, 1);
-    IpcIoPushSvc(&request, &svcIdentity_);
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&request, data, MAX_IO_SIZE, 1);
+    bool writeRemote = WriteRemoteObject(&request, &svcIdentity_);
+    if (!writeRemote) {
+        return EC_FAILURE;
+    }
 #ifdef __LINUX__
     while (bdsClient_->Invoke(bdsClient_, REGISTER_CALLBACK, &request, this, Notify) != EC_SUCCESS) {
 #else
@@ -216,28 +207,13 @@ int32_t BundleDaemonClient::RegisterCallback()
 int32_t BundleDaemonClient::CallClientInvoke(int32_t funcId, const char *firstPath, const char *secondPath)
 {
     IpcIo request;
-    char data[IPC_IO_DATA_MAX];
-#ifdef __LINUX__
-    IpcIoInit(&request, data, IPC_IO_DATA_MAX, 0);
-#else
-    IpcIoInit(&request, data, IPC_IO_DATA_MAX, 1);
-#endif
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&request, data, MAX_IO_SIZE, 0);
     std::string innerStr = firstPath;
     innerStr += secondPath;
-#ifdef __LINUX__
-    IpcIoPushString(&request, innerStr.c_str());
-#else
-    BuffPtr dataBuff = {
-        .buffSz = innerStr.length() + 1,
-        .buff = const_cast<char *>(innerStr.c_str())
-    };
-    IpcIoPushDataBuff(&request, &dataBuff);
-#endif
-    IpcIoPushUint16(&request, strlen(firstPath));
-    if (!IpcIoAvailable(&request)) {
-        PRINTE("BundleDaemonClient", "BundleDaemonClient GenerateRequest ipc failed");
-        return EC_FAILURE;
-    }
+    WriteString(&request, innerStr.c_str());
+
+    WriteUint16(&request, strlen(firstPath));
 
     Lock<Mutex> lock(mutex_);
 #ifdef __LINUX__
@@ -296,12 +272,12 @@ int32_t BundleDaemonClient::CreateDataDirectory(const char *dataPath, int32_t ui
         return EC_INVALID;
     }
     IpcIo request;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&request, data, IPC_IO_DATA_MAX, 0);
-    IpcIoPushString(&request, dataPath);
-    IpcIoPushInt32(&request, uid);
-    IpcIoPushInt32(&request, gid);
-    IpcIoPushBool(&request, isChown);
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&request, data, MAX_IO_SIZE, 0);
+    WriteString(&request, dataPath);
+    WriteInt32(&request, uid);
+    WriteInt32(&request, gid);
+    WriteBool(&request, isChown);
 
     Lock<Mutex> lock(mutex_);
 #ifdef __LINUX__
@@ -321,22 +297,12 @@ int32_t BundleDaemonClient::StoreContentToFile(const char *file, const void *buf
         return EC_INVALID;
     }
     IpcIo request;
-    char data[IPC_IO_DATA_MAX];
-#ifdef __LINUX__
-    IpcIoInit(&request, data, IPC_IO_DATA_MAX, 0);
-#else
-    IpcIoInit(&request, data, IPC_IO_DATA_MAX, 1);
-#endif
-    IpcIoPushString(&request, file);
-#ifdef __LINUX__
-    IpcIoPushString(&request, static_cast<const char *>(buffer));
-#else
-    BuffPtr dataBuff = {
-        .buffSz = size, // include \0
-        .buff = const_cast<void *>(buffer)
-    };
-    IpcIoPushDataBuff(&request, &dataBuff);
-#endif
+    char data[MAX_IO_SIZE];
+
+    IpcIoInit(&request, data, MAX_IO_SIZE, 0);
+
+    WriteString(&request, file);
+    WriteString(&request, static_cast<const char *>(buffer));
     Lock<Mutex> lock(mutex_);
 #ifdef __LINUX__
     return WaitResultSync(bdsClient_->Invoke(bdsClient_, STORE_CONTENT_TO_FILE, &request, this, Notify));
@@ -355,10 +321,10 @@ int32_t BundleDaemonClient::MoveFile(const char *oldFile, const char *newFile)
         return EC_INVALID;
     }
     IpcIo request;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&request, data, IPC_IO_DATA_MAX, 0);
-    IpcIoPushString(&request, oldFile);
-    IpcIoPushString(&request, newFile);
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&request, data, MAX_IO_SIZE, 0);
+    WriteString(&request, oldFile);
+    WriteString(&request, newFile);
 
     Lock<Mutex> lock(mutex_);
 #ifdef __LINUX__
@@ -378,9 +344,9 @@ int32_t BundleDaemonClient::RemoveFile(const char *file)
         return EC_INVALID;
     }
     IpcIo request;
-    char data[IPC_IO_DATA_MAX];
-    IpcIoInit(&request, data, IPC_IO_DATA_MAX, 0);
-    IpcIoPushString(&request, file);
+    char data[MAX_IO_SIZE];
+    IpcIoInit(&request, data, MAX_IO_SIZE, 0);
+    WriteString(&request, file);
 
     Lock<Mutex> lock(mutex_);
 #ifdef __LINUX__
