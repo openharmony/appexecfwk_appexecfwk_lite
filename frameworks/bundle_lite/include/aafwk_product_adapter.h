@@ -12,14 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AAFWK_PRODUCT_ADAPTER_H 
+#ifndef AAFWK_PRODUCT_ADAPTER_H
 #define AAFWK_PRODUCT_ADAPTER_H
-
 
 #include <cstdint>
 
 namespace OHOS {
-
 /**
  * The wrapper class for some product feature implementation, since some interfaces are provided by specific product.
  */

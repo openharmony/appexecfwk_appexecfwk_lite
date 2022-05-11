@@ -18,7 +18,6 @@
 #include "errorcode.h"
 
 namespace OHOS {
-
 void AafwkProductAdapter::PrintEventTrace(uint8_t info1, uint8_t info2, uint8_t info3)
 {
     EVENT(EC_PUBLIC, 0x3f, info1, info2, info3);
