@@ -12,18 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AAFWK_PRODUCT_ADAPTER_H #define AAFWK_PRODUCT_ADAPTER_H
-#define AAFWK_PRODUCT_ADAPTER_H #define AAFWK_PRODUCT_ADAPTER_H
+#ifndef AAFWK_PRODUCT_ADAPTER_H
+#define AAFWK_PRODUCT_ADAPTER_H
 
 #include <cstdint>
 
 namespace OHOS {
-/**
- * This handler type is so specific for product, should be designed from OS dfx level.
- */
-typedef void (*EventPrintHandler)(uint8_t info1, uint8_t info2, uint8_t info3, uint8_t info4);
-typedef void (*ErrCodePrintHandler)(uint8_t info1, uint8_t info2, uint8_t info3, uint16_t info4);
-
 /**
  * The wrapper class for some product feature implementation, since some interfaces are provided by specific product.
  */
@@ -35,10 +29,6 @@ public:
     AafwkProductAdapter &operator=(AafwkProductAdapter &&) = delete;
     AafwkProductAdapter() = delete;
     ~AafwkProductAdapter() = delete;
-
-    // initialization functions
-    static void InitTraceHandlers(EventPrintHandler eventHandler, ErrCodePrintHandler errCodeHandler);
-    static void InitAafwkTags(uint8_t *aceTags, uint8_t tagCount);
 
     // wrapper functions, for aafwk internal calling
     static void PrintEventTrace(uint8_t info2, uint8_t info3, uint8_t info4);
