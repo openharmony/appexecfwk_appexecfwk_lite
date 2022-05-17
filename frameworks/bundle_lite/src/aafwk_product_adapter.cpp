@@ -18,9 +18,9 @@
 #include "errorcode.h"
 
 namespace OHOS {
-void AafwkProductAdapter::PrintEventTrace(uint8_t info1, uint8_t info2, uint8_t info3)
+void AafwkProductAdapter::PrintEventTrace(uint8_t info1)
 {
-    EVENT(EC_PUBLIC, 0x3f, info1, info2, info3);
+    EVENT(EC_PUBLIC, 0x3f, 0, info1, 0);
 }
 
 void AafwkProductAdapter::PrintErrCode(uint8_t info2, uint16_t rfu)
