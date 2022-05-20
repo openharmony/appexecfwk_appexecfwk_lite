@@ -23,14 +23,9 @@ AafwkEventErrorCode *AafwkEventErrorCode::GetInstance()
     return &printInstance;
 }
 
-void AafwkEventErrorCode::AafwkEventPrint(uint8_t info2, uint8_t info3)
+void AafwkEventErrorCode::AafwkEventPrint(uint8_t info1)
 {
-    AafwkProductAdapter::PrintEventTrace(0, info2, info3);
-}
-
-void AafwkEventErrorCode::AafwkEventPrint(uint8_t info1, uint8_t info2, uint8_t info3)
-{
-    AafwkProductAdapter::PrintEventTrace(info1, info2, info3);
+    AafwkProductAdapter::PrintEventTrace(info1);
 }
 
 void AafwkEventErrorCode::AafwkErrorPrint(uint8_t info1, uint16_t info2)
