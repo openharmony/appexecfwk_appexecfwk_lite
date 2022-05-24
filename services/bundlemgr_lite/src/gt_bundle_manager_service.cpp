@@ -390,6 +390,7 @@ void GtManagerService::ScanPackages()
     if (jsEngineVer_ == nullptr) {
         HILOG_WARN(HILOG_MODULE_AAFWK, "[BMS] get jsEngine version fail when restart!");
     }
+    HILOG_INFO(HILOG_MODULE_AAFWK, "[BMS] get jsEngine version success!");
 }
 
 void GtManagerService::RemoveSystemAppPathList(List<ToBeInstalledApp *> *systemPathList)
@@ -678,7 +679,6 @@ bool GtManagerService::ReloadBundleInfo(const char *profileDir, const char *appI
     AdapterFree(bundleRes);
     APP_ERRCODE_EXTRA(EXCE_ACE_APP_SCAN, EXCE_ACE_APP_SCAN_PARSE_PROFILE_FALIED);
     HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] reload bundle info fail!, isSystemApp is %{public}d", isSystemApp);
-    BundleUtil::RemoveDir(profileDir);
     return false;
 }
 
@@ -772,6 +772,13 @@ void GtManagerService::TransformJsToBcWhenRestart(const char *codePath, const ch
     if (installRecordJson == nullptr) {
         AdapterFree(bundleJsonPath);
         HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] get installRecord fail when restart!");
+        return;
+    }
+
+    if (jsEngineVer_ == nullptr) {
+        cJSON_Delete(installRecordJson);
+        AdapterFree(bundleJsonPath);
+        HILOG_ERROR(HILOG_MODULE_AAFWK, "[BMS] TransformJsToBcWhenRestart jsEngineVer_ is nullptr!");
         return;
     }
 
