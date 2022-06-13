@@ -53,7 +53,7 @@ executable("bm") {
     "${aafwk_lite_path}/interfaces/innerkits/abilitymgr_lite",
     "${aafwk_lite_path}/interfaces/kits/want_lite",
     "${aafwk_lite_path}/services/abilitymgr_lite/include",
-    "${appexecfwk_lite_path}/interfaces/innerkits/bundlemgr_lite/",
+    "${appexecfwk_lite_path}/interfaces/inner_api/bundlemgr_lite/",
     "${appexecfwk_lite_path}/frameworks/bundle_lite/include",
     "${appexecfwk_lite_path}/utils/bundle_lite",
     "${appexecfwk_lite_path}/interfaces/kits/bundle_lite",

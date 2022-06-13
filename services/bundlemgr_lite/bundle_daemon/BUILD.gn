@@ -50,7 +50,7 @@ executable("bundle_daemon") {
 
   include_dirs = [
     "include",
-    "${appexecfwk_lite_path}/interfaces/innerkits/bundlemgr_lite",
+    "${appexecfwk_lite_path}/interfaces/inner_api/bundlemgr_lite",
     "${appexecfwk_lite_path}/utils/bundle_lite",
     "${appexecfwk_lite_path}/services/bundlemgr_lite/include",
     "//foundation/distributedschedule/samgr_lite/interfaces/innerkits/samgr",
