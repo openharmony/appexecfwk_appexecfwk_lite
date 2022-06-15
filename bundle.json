@@ -44,7 +44,7 @@
             "inner_kits": [
                 {
                     "header": {
-                        "header_base": "foundation/appexecfwk/appexecfwk_lite/interfaces/innerkits/bundlemgr_lite",
+                        "header_base": "foundation/appexecfwk/appexecfwk_lite/interfaces/inner_api/bundlemgr_lite",
                         "header_files": [
                             "bundle_daemon_interface.h",
                             "bundle_inner_interface.h",
